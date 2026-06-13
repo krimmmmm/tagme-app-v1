@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, View, Text, Pressable, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LoginScreen from './src/screens/LoginScreen';
 import CameraScreen from './src/screens/CameraScreen';
@@ -37,7 +36,7 @@ export default function App() {
   };
 
   return (
-    <LinearGradient colors={["#070814", "#11122B"]} style={styles.app}>
+    <View style={styles.app}>
       <StatusBar style="light" />
       <SafeAreaView style={styles.safe}>
         <View style={styles.content}>{renderScreen()}</View>
@@ -53,12 +52,12 @@ export default function App() {
           })}
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  app: { flex: 1 },
+  app: { flex: 1, backgroundColor: '#070814' },
   safe: { flex: 1 },
   content: { flex: 1 },
   tabBar: {
