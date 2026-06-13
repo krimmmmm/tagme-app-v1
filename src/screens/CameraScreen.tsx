@@ -153,41 +153,55 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
           }
 
           const detection = detections[0];
-
-          // MediaPipe sometimes returns relativeBoundingBox, and sometimes boundingBox.
-          // The previous version used xCenter/yCenter fallback values, so the tag looked like it stayed in the same spot.
-          const relativeBox =
-            detection?.locationData?.relativeBoundingBox ||
-            detection?.boundingBox;
-
-          if (!relativeBox) {
-            setFaceStatus('Face Follow: พบใบหน้า แต่ยังอ่านตำแหน่งไม่ได้');
-            return;
-          }
-
           const video = videoRef.current;
           const videoWidth = video?.videoWidth || 1280;
           const videoHeight = video?.videoHeight || 720;
 
-          const rawXMin = Number(relativeBox.xMin ?? relativeBox.x ?? 0);
-          const rawYMin = Number(relativeBox.yMin ?? relativeBox.y ?? 0);
-          const rawWidth = Number(relativeBox.width ?? 0.25);
-          const rawHeight = Number(relativeBox.height ?? 0.25);
+          // Prefer MediaPipe boundingBox center values because they track correctly on webcam.
+          // Fallback to relativeBoundingBox only when boundingBox is not available.
+          const centerBox = detection?.boundingBox;
+          const relativeBox = detection?.locationData?.relativeBoundingBox;
 
-          const xMin = rawXMin > 1 ? rawXMin / videoWidth : rawXMin;
-          const yMin = rawYMin > 1 ? rawYMin / videoHeight : rawYMin;
-          const boxWidth = rawWidth > 1 ? rawWidth / videoWidth : rawWidth;
-          const boxHeight = rawHeight > 1 ? rawHeight / videoHeight : rawHeight;
+          let faceCenterX = 50;
+          let headTopY = 20;
+          let faceHeight = 25;
 
-          const faceCenterX = (xMin + boxWidth / 2) * 100;
-          const headTopY = yMin * 100;
+          if (centerBox?.xCenter !== undefined && centerBox?.yCenter !== undefined) {
+            const xCenterRaw = Number(centerBox.xCenter);
+            const yCenterRaw = Number(centerBox.yCenter);
+            const heightRaw = Number(centerBox.height ?? 0.25);
+
+            const xCenter = xCenterRaw > 1 ? xCenterRaw / videoWidth : xCenterRaw;
+            const yCenter = yCenterRaw > 1 ? yCenterRaw / videoHeight : yCenterRaw;
+            const boxHeight = heightRaw > 1 ? heightRaw / videoHeight : heightRaw;
+
+            faceCenterX = xCenter * 100;
+            headTopY = (yCenter - boxHeight / 2) * 100;
+            faceHeight = boxHeight * 100;
+          } else if (relativeBox) {
+            const rawXMin = Number(relativeBox.xMin ?? relativeBox.x ?? 0);
+            const rawYMin = Number(relativeBox.yMin ?? relativeBox.y ?? 0);
+            const rawWidth = Number(relativeBox.width ?? 0.25);
+            const rawHeight = Number(relativeBox.height ?? 0.25);
+
+            const xMin = rawXMin > 1 ? rawXMin / videoWidth : rawXMin;
+            const yMin = rawYMin > 1 ? rawYMin / videoHeight : rawYMin;
+            const boxWidth = rawWidth > 1 ? rawWidth / videoWidth : rawWidth;
+            const boxHeight = rawHeight > 1 ? rawHeight / videoHeight : rawHeight;
+
+            faceCenterX = (xMin + boxWidth / 2) * 100;
+            headTopY = yMin * 100;
+            faceHeight = boxHeight * 100;
+          } else {
+            setFaceStatus('Face Follow: พบใบหน้า แต่ยังอ่านตำแหน่งไม่ได้');
+            return;
+          }
 
           // Video is mirrored by CSS scaleX(-1), so x must be mirrored too.
           const visualX = 100 - faceCenterX;
 
-          // Place the AR tag clearly above the user's head.
-          // Higher number = tag moves further upward.
-          const aboveHeadOffset = Math.max(18, boxHeight * 100 * 0.9);
+          // Put tag above head. Bigger offset = higher tag.
+          const aboveHeadOffset = Math.max(22, faceHeight * 0.9);
           const tagTop = headTopY - aboveHeadOffset;
 
           setTags((items) =>
