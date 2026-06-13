@@ -152,8 +152,15 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
             return;
           }
 
-          const box = detections[0]?.boundingBox;
-          if (!box) {
+          const detection = detections[0];
+
+          // MediaPipe sometimes returns relativeBoundingBox, and sometimes boundingBox.
+          // The previous version used xCenter/yCenter fallback values, so the tag looked like it stayed in the same spot.
+          const relativeBox =
+            detection?.locationData?.relativeBoundingBox ||
+            detection?.boundingBox;
+
+          if (!relativeBox) {
             setFaceStatus('Face Follow: พบใบหน้า แต่ยังอ่านตำแหน่งไม่ได้');
             return;
           }
@@ -162,17 +169,26 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
           const videoWidth = video?.videoWidth || 1280;
           const videoHeight = video?.videoHeight || 720;
 
-          const xCenterRaw = Number(box.xCenter ?? 0.5);
-          const yCenterRaw = Number(box.yCenter ?? 0.5);
-          const heightRaw = Number(box.height ?? 0.25);
+          const rawXMin = Number(relativeBox.xMin ?? relativeBox.x ?? 0);
+          const rawYMin = Number(relativeBox.yMin ?? relativeBox.y ?? 0);
+          const rawWidth = Number(relativeBox.width ?? 0.25);
+          const rawHeight = Number(relativeBox.height ?? 0.25);
 
-          const xCenter = xCenterRaw > 1 ? xCenterRaw / videoWidth : xCenterRaw;
-          const yCenter = yCenterRaw > 1 ? yCenterRaw / videoHeight : yCenterRaw;
-          const boxHeight = heightRaw > 1 ? heightRaw / videoHeight : heightRaw;
+          const xMin = rawXMin > 1 ? rawXMin / videoWidth : rawXMin;
+          const yMin = rawYMin > 1 ? rawYMin / videoHeight : rawYMin;
+          const boxWidth = rawWidth > 1 ? rawWidth / videoWidth : rawWidth;
+          const boxHeight = rawHeight > 1 ? rawHeight / videoHeight : rawHeight;
+
+          const faceCenterX = (xMin + boxWidth / 2) * 100;
+          const headTopY = yMin * 100;
 
           // Video is mirrored by CSS scaleX(-1), so x must be mirrored too.
-          const visualX = (1 - xCenter) * 100;
-          const visualTop = (yCenter - boxHeight / 2) * 100;
+          const visualX = 100 - faceCenterX;
+
+          // Place the AR tag clearly above the user's head.
+          // Higher number = tag moves further upward.
+          const aboveHeadOffset = Math.max(18, boxHeight * 100 * 0.9);
+          const tagTop = headTopY - aboveHeadOffset;
 
           setTags((items) =>
             items.map((item) =>
@@ -180,7 +196,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                 ? {
                     ...item,
                     left: clamp(visualX - 12, 3, 82),
-                    top: clamp(visualTop - 8, 5, 76),
+                    top: clamp(tagTop, 1, 58),
                   }
                 : item
             )
