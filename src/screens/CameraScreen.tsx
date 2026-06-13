@@ -2,22 +2,35 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform, TextInput } from 'react-native';
 import { LanguageKey, t } from '../i18n/translations';
 
-type Tag = { id: string; emoji: string; title: string; left: string; top: string; color: string };
+type Tag = {
+  id: string;
+  emoji: string;
+  title: string;
+  left: number;
+  top: number;
+  color: string;
+};
 
 const initialTags: Tag[] = [
-  { id: '1', emoji: '☕', title: 'Coffee Lover', left: '36%', top: '32%', color: '#F59E0B' },
-  { id: '2', emoji: '🎌', title: 'Anime Club', left: '10%', top: '24%', color: '#C026D3' },
-  { id: '3', emoji: '🎮', title: 'Gamer', left: '62%', top: '26%', color: '#22C55E' },
+  { id: '1', emoji: '☕', title: 'Coffee Lover', left: 42, top: 30, color: '#F59E0B' },
+  { id: '2', emoji: '🎌', title: 'Anime Club', left: 12, top: 24, color: '#C026D3' },
+  { id: '3', emoji: '🎮', title: 'Gamer', left: 66, top: 26, color: '#22C55E' },
 ];
 
 export default function CameraScreen({ language }: { language: LanguageKey }) {
   const text = t[language];
+
   const videoRef = useRef<any>(null);
   const streamRef = useRef<any>(null);
+  const detectorRef = useRef<any>(null);
+  const loopRef = useRef<any>(null);
 
   const [mode, setMode] = useState<'ar' | 'radar'>('ar');
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState('');
+  const [faceMode, setFaceMode] = useState(false);
+  const [faceStatus, setFaceStatus] = useState('Face Follow: Off');
+
   const [tags, setTags] = useState<Tag[]>(initialTags);
   const [selectedTagId, setSelectedTagId] = useState('1');
   const [myStatus, setMyStatus] = useState('ขอความช่วยเหลือ');
@@ -30,17 +43,19 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
     async function startCamera() {
       try {
         const stream = await (navigator as any).mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
+          video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: false,
         });
 
         if (!mounted) return;
 
         streamRef.current = stream;
+
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.play?.();
         }
+
         setCameraReady(true);
       } catch {
         setCameraError('ไม่สามารถเปิดกล้องได้ กรุณาอนุญาต Camera Permission');
@@ -51,9 +66,87 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
 
     return () => {
       mounted = false;
+      if (loopRef.current) cancelAnimationFrame(loopRef.current);
       streamRef.current?.getTracks?.().forEach((track: any) => track.stop());
     };
   }, []);
+
+  useEffect(() => {
+    if (!faceMode || Platform.OS !== 'web') return;
+
+    let active = true;
+
+    async function setupDetector() {
+      try {
+        const FaceDetectorClass = (window as any).FaceDetector;
+
+        if (!FaceDetectorClass) {
+          setFaceStatus('Face Follow: Browser ยังไม่รองรับ FaceDetector');
+          return;
+        }
+
+        detectorRef.current = new FaceDetectorClass({
+          fastMode: true,
+          maxDetectedFaces: 3,
+        });
+
+        setFaceStatus('Face Follow: Searching...');
+
+        const detectLoop = async () => {
+          try {
+            const video = videoRef.current;
+
+            if (!active || !video || video.readyState < 2) {
+              loopRef.current = requestAnimationFrame(detectLoop);
+              return;
+            }
+
+            const faces = await detectorRef.current.detect(video);
+
+            if (faces?.length) {
+              const firstFace = faces[0].boundingBox;
+              const videoWidth = video.videoWidth || 1280;
+              const videoHeight = video.videoHeight || 720;
+
+              const centerX = ((firstFace.x + firstFace.width / 2) / videoWidth) * 100;
+              const topY = (firstFace.y / videoHeight) * 100;
+
+              setTags((items) =>
+                items.map((item) =>
+                  item.id === selectedTagId
+                    ? {
+                        ...item,
+                        left: Math.max(5, Math.min(82, centerX - 13)),
+                        top: Math.max(8, Math.min(75, topY - 10)),
+                      }
+                    : item
+                )
+              );
+
+              setFaceStatus(`Face Follow: เจอใบหน้า ${faces.length} คน`);
+            } else {
+              setFaceStatus('Face Follow: ไม่พบใบหน้า');
+            }
+          } catch {
+            setFaceStatus('Face Follow: ตรวจจับไม่สำเร็จ');
+          }
+
+          loopRef.current = requestAnimationFrame(detectLoop);
+        };
+
+        detectLoop();
+      } catch {
+        setFaceStatus('Face Follow: ไม่สามารถเริ่มระบบได้');
+      }
+    }
+
+    setupDetector();
+
+    return () => {
+      active = false;
+      if (loopRef.current) cancelAnimationFrame(loopRef.current);
+    };
+  }, [faceMode, selectedTagId]);
 
   const applyStatus = () => {
     setTags((items) =>
@@ -71,6 +164,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
         <TopBar mode={mode} setMode={setMode} />
         <View style={styles.radarPage}>
           <Text style={styles.radarTitle}>{text.radarTitle}</Text>
+
           <View style={styles.radarCircle}>
             <View style={styles.ring1} />
             <View style={styles.ring2} />
@@ -126,6 +220,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
+                  transform: 'scaleX(-1)',
                   backgroundColor: '#111827',
                 },
               })
@@ -153,10 +248,10 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                 style={[
                   styles.floatTag,
                   {
-                    left: tag.left as any,
-                    top: tag.top as any,
+                    left: `${tag.left}%` as any,
+                    top: `${tag.top}%` as any,
                     borderColor: tag.color,
-                    backgroundColor: active ? 'rgba(91,75,255,0.90)' : 'rgba(20,20,40,0.82)',
+                    backgroundColor: active ? 'rgba(91,75,255,0.92)' : 'rgba(20,20,40,0.82)',
                   },
                 ]}
               >
@@ -171,8 +266,19 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
         </View>
 
         <View style={styles.testPanel}>
-          <Text style={styles.panelTitle}>ทดสอบกล่องข้อความ AR</Text>
-          <Text style={styles.panelSub}>แตะกล่องข้อความบนภาพ แล้วเปลี่ยน Status ได้ทันที</Text>
+          <View style={styles.panelTop}>
+            <View>
+              <Text style={styles.panelTitle}>ทดสอบ AR Face Follow</Text>
+              <Text style={styles.panelSub}>{faceStatus}</Text>
+            </View>
+
+            <Pressable
+              style={[styles.faceBtn, faceMode && styles.faceBtnActive]}
+              onPress={() => setFaceMode((value) => !value)}
+            >
+              <Text style={styles.faceBtnText}>{faceMode ? 'ON' : 'OFF'}</Text>
+            </Pressable>
+          </View>
 
           <View style={styles.inputRow}>
             <TextInput
@@ -186,6 +292,10 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
               <Text style={styles.applyText}>แสดง</Text>
             </Pressable>
           </View>
+
+          <Text style={styles.hint}>
+            เปิด Face Follow แล้วกล่องที่เลือกจะพยายามตามใบหน้าบนกล้อง
+          </Text>
         </View>
       </View>
     </View>
@@ -202,6 +312,7 @@ function TopBar({
   return (
     <View style={styles.topBar}>
       <Text style={styles.profileIcon}>👤</Text>
+
       <View style={styles.segment}>
         <Pressable onPress={() => setMode('ar')} style={[styles.segmentBtn, mode === 'ar' && styles.segmentActive]}>
           <Text style={[styles.segmentText, mode === 'ar' && styles.segmentTextActive]}>AR</Text>
@@ -210,6 +321,7 @@ function TopBar({
           <Text style={[styles.segmentText, mode === 'radar' && styles.segmentTextActive]}>Radar</Text>
         </Pressable>
       </View>
+
       <Text style={styles.search}>⌕</Text>
     </View>
   );
@@ -244,12 +356,17 @@ const styles = StyleSheet.create({
   distanceBubble: { position: 'absolute', zIndex: 20, color: '#fff', backgroundColor: '#6B7280', padding: 8, borderRadius: 999, fontWeight: '900' },
 
   testPanel: { marginHorizontal: 16, marginBottom: 12, borderRadius: 22, backgroundColor: '#12142B', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', padding: 14 },
+  panelTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   panelTitle: { color: '#fff', fontWeight: '900', fontSize: 17 },
   panelSub: { color: '#A8ACCF', marginTop: 4, fontSize: 13, fontWeight: '700' },
+  faceBtn: { width: 64, height: 38, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.10)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' },
+  faceBtnActive: { backgroundColor: '#16A34A', borderColor: '#86EFAC' },
+  faceBtnText: { color: '#fff', fontWeight: '900' },
   inputRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
   input: { flex: 1, height: 46, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', paddingHorizontal: 14, color: '#fff', fontWeight: '700' },
   applyBtn: { width: 82, height: 46, borderRadius: 14, backgroundColor: '#5B4BFF', alignItems: 'center', justifyContent: 'center' },
   applyText: { color: '#fff', fontWeight: '900' },
+  hint: { color: '#8B8EA6', marginTop: 10, fontSize: 12 },
 
   radarPage: { flex: 1, padding: 20 },
   radarTitle: { color: '#fff', fontSize: 22, fontWeight: '900', marginBottom: 16 },
