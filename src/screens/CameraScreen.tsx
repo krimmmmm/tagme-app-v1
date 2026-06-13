@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform, TextInput } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform, TextInput, Image } from 'react-native';
 import { LanguageKey, t } from '../i18n/translations';
 
 type Tag = {
@@ -12,7 +12,7 @@ type Tag = {
 };
 
 const initialTags: Tag[] = [
-  { id: '1', emoji: '☕', title: 'Coffee Lover', left: 42, top: 30, color: '#F59E0B' },
+  { id: '1', emoji: '🎮', title: 'Gamer', left: 42, top: 30, color: '#F59E0B' },
   { id: '2', emoji: '🎌', title: 'Anime Club', left: 12, top: 24, color: '#C026D3' },
   { id: '3', emoji: '🎮', title: 'Gamer', left: 66, top: 26, color: '#22C55E' },
 ];
@@ -165,19 +165,16 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
           const xCenter = xCenterRaw > 1 ? xCenterRaw / videoWidth : xCenterRaw;
 
           // Video is mirrored by CSS scaleX(-1), so x must be mirrored too.
-          // Keep horizontal tracking only.
+          // Keep horizontal tracking only, and pin the AR card to the top edge.
           const visualX = (1 - xCenter) * 100;
-
-          // Fixed top position: always show AR tag at the top edge of the camera frame.
-          // This prevents the tag from covering the user's face.
-          const fixedTopEdge = 2;
+          const fixedTopEdge = 1.5;
 
           setTags((items) =>
             items.map((item) =>
               item.id === selectedTagId
                 ? {
                     ...item,
-                    left: clamp(visualX - 12, 3, 82),
+                    left: clamp(visualX - 18, 1, 68),
                     top: fixedTopEdge,
                   }
                 : item
@@ -320,6 +317,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                 onPress={() => setSelectedTagId(tag.id)}
                 style={[
                   styles.floatTag,
+                  active && styles.floatTagEpic,
                   {
                     left: `${tag.left}%` as any,
                     top: `${tag.top}%` as any,
@@ -328,7 +326,15 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                   },
                 ]}
               >
-                <Text style={styles.floatText}>{tag.emoji} {tag.title}</Text>
+                {active ? (
+                  <Image
+                    source={require('../../assets/frames/cat-neon-frame-epic.png')}
+                    style={styles.catFrameImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <Text style={styles.floatText}>{tag.emoji} {tag.title}</Text>
+                )}
               </Pressable>
             );
           })}
@@ -412,6 +418,22 @@ const styles = StyleSheet.create({
   fallbackText: { color: '#A8ACCF', marginTop: 12, textAlign: 'center', lineHeight: 22 },
   dimOverlay: { position: 'absolute', inset: 0 as any, backgroundColor: 'rgba(0,0,0,0.16)' },
   floatTag: { position: 'absolute', zIndex: 20, borderWidth: 1.4, borderRadius: 14, paddingHorizontal: 13, paddingVertical: 9, shadowColor: '#C026D3', shadowOpacity: 0.65, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } },
+
+  floatTagEpic: {
+    width: 360,
+    height: 150,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+    shadowOpacity: 0,
+  },
+
+  catFrameImage: {
+    width: '100%',
+    height: '100%',
+  },
+
   floatText: { color: '#fff', fontWeight: '900', textAlign: 'center', fontSize: 15 },
   distanceBubble: { position: 'absolute', zIndex: 20, color: '#fff', backgroundColor: '#6B7280', padding: 8, borderRadius: 999, fontWeight: '900' },
   testPanel: { marginHorizontal: 16, marginBottom: 12, borderRadius: 22, backgroundColor: '#12142B', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', padding: 14 },
