@@ -1,41 +1,43 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { LanguageKey, t } from '../i18n/translations';
 
-const pages = [
-  {
-    title: 'แสดงตัวตนของคุณ',
-    subtitle: 'กำหนด Status, สัญลักษณ์ และกรอบของตัวคุณให้คนอื่นเห็นในโลกจริง',
-    tags: [
-      { text: '🎮 Gamer', x: 40, y: 210 },
-      { text: '🏀 Basketball', x: 34, y: 295 },
-      { text: '🎧 Music Lover', x: 72, y: 410 },
-    ],
-    person: '🧑🏻‍💻',
-  },
-  {
-    title: 'ค้นหาคนที่ใช่',
-    subtitle: 'มองหาคนที่มีความสนใจหรืออยู่ในกลุ่มเดียวกันกับคุณ',
-    tags: [
-      { text: '☕ Coffee Lover', x: 80, y: 300 },
-      { text: '🎨 Designer', x: 90, y: 370 },
-      { text: '🌸 Anime Club', x: 88, y: 455 },
-    ],
-    person: '👩🏻‍🎤',
-  },
-  {
-    title: 'เชื่อมต่อในโลกจริง',
-    subtitle: 'พบปะ พูดคุย สร้างมิตรภาพ และทำกิจกรรมร่วมกัน',
-    tags: [
-      { text: '💜', x: 80, y: 315 },
-      { text: '🤝', x: 230, y: 330 },
-      { text: '👥', x: 152, y: 235 },
-      { text: '6m', x: 210, y: 455 },
-    ],
-    person: '🌌',
-  },
-];
+export default function OnboardingScreen({ language, onDone }: { language: LanguageKey; onDone: () => void }) {
+  const text = t[language];
+  const pages = [
+    {
+      title: text.onboarding1Title,
+      subtitle: text.onboarding1Subtitle,
+      tags: [
+        { text: '🎮 Gamer', x: 40, y: 210 },
+        { text: '🏀 Basketball', x: 34, y: 295 },
+        { text: '🎧 Music Lover', x: 72, y: 410 },
+      ],
+      person: '🧑🏻‍💻',
+    },
+    {
+      title: text.onboarding2Title,
+      subtitle: text.onboarding2Subtitle,
+      tags: [
+        { text: '☕ Coffee Lover', x: 80, y: 300 },
+        { text: '🎨 Designer', x: 90, y: 370 },
+        { text: '🌸 Anime Club', x: 88, y: 455 },
+      ],
+      person: '👩🏻‍🎤',
+    },
+    {
+      title: text.onboarding3Title,
+      subtitle: text.onboarding3Subtitle,
+      tags: [
+        { text: '💜', x: 80, y: 315 },
+        { text: '🤝', x: 230, y: 330 },
+        { text: '👥', x: 152, y: 235 },
+        { text: '6m', x: 210, y: 455 },
+      ],
+      person: '🌌',
+    },
+  ];
 
-export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const [page, setPage] = useState(0);
   const item = pages[page];
 
@@ -70,11 +72,11 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
 
         <View style={styles.footer}>
           <Pressable onPress={onDone}>
-            <Text style={styles.skip}>ข้าม</Text>
+            <Text style={styles.skip}>{text.skip}</Text>
           </Pressable>
 
           <Pressable style={styles.nextBtn} onPress={next}>
-            <Text style={styles.nextText}>{page === pages.length - 1 ? 'เริ่มใช้งาน' : 'ถัดไป'}</Text>
+            <Text style={styles.nextText}>{page === pages.length - 1 ? text.start : text.next}</Text>
           </Pressable>
         </View>
       </View>

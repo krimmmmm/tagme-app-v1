@@ -9,44 +9,53 @@ import FeedScreen from './src/screens/FeedScreen';
 import GroupsScreen from './src/screens/GroupsScreen';
 import ShopScreen from './src/screens/ShopScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import { LanguageKey, t } from './src/i18n/translations';
 
 type AppStage = 'login' | 'onboarding' | 'main';
 type TabKey = 'profile' | 'camera' | 'feed' | 'groups' | 'shop';
 
-const tabs: Array<{ key: TabKey; label: string; icon: string; isMain?: boolean }> = [
-  { key: 'profile', label: 'โปรไฟล์', icon: '👤' },
-  { key: 'camera', label: 'AR', icon: 'T', isMain: true },
-  { key: 'feed', label: 'แชท', icon: '💬' },
-  { key: 'groups', label: 'กลุ่ม', icon: '👥' },
-  { key: 'shop', label: 'ร้านค้า', icon: '🛒' },
-];
-
 export default function App() {
+  const [language, setLanguage] = useState<LanguageKey>('th');
   const [stage, setStage] = useState<AppStage>('login');
   const [tab, setTab] = useState<TabKey>('camera');
+  const text = t[language];
+
+  const tabs: Array<{ key: TabKey; label: string; icon: string; isMain?: boolean }> = [
+    { key: 'profile', label: text.tabProfile, icon: '👤' },
+    { key: 'camera', label: text.tabAR, icon: 'T', isMain: true },
+    { key: 'feed', label: text.tabChat, icon: '💬' },
+    { key: 'groups', label: text.tabGroups, icon: '👥' },
+    { key: 'shop', label: text.tabShop, icon: '🛒' },
+  ];
 
   if (stage === 'login') {
-    return <LoginScreen onLogin={() => setStage('onboarding')} />;
+    return (
+      <LoginScreen
+        language={language}
+        onLanguageChange={setLanguage}
+        onLogin={() => setStage('onboarding')}
+      />
+    );
   }
 
   if (stage === 'onboarding') {
-    return <OnboardingScreen onDone={() => setStage('main')} />;
+    return <OnboardingScreen language={language} onDone={() => setStage('main')} />;
   }
 
   const renderScreen = () => {
     switch (tab) {
       case 'profile':
-        return <ProfileScreen />;
+        return <ProfileScreen language={language} />;
       case 'camera':
-        return <CameraScreen />;
+        return <CameraScreen language={language} />;
       case 'feed':
-        return <FeedScreen />;
+        return <FeedScreen language={language} />;
       case 'groups':
-        return <GroupsScreen />;
+        return <GroupsScreen language={language} />;
       case 'shop':
-        return <ShopScreen />;
+        return <ShopScreen language={language} />;
       default:
-        return <CameraScreen />;
+        return <CameraScreen language={language} />;
     }
   };
 

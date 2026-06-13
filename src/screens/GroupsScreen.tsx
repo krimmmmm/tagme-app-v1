@@ -1,23 +1,26 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import ScreenTitle from '../components/ScreenTitle';
+import { LanguageKey, t } from '../i18n/translations';
 
-const groups = [
-  { icon: '🎌', name: 'Anime Club', count: 'สมาชิก 12,345 คน', role: 'Owner', color: '#C026D3' },
-  { icon: '🎮', name: 'Gamer Thailand', count: 'สมาชิก 8,765 คน', role: 'Admin', color: '#2563EB' },
-  { icon: '☕', name: 'Coffee Lovers', count: 'สมาชิก 4,321 คน', role: 'Member', color: '#F59E0B' },
-  { icon: '📸', name: 'Photo Journey', count: 'สมาชิก 2,100 คน', role: 'Member', color: '#EC4899' },
-];
+export default function GroupsScreen({ language }: { language: LanguageKey }) {
+  const text = t[language];
 
-export default function GroupsScreen() {
+  const groups = [
+    { icon: '🎌', name: 'Anime Club', count: `12,345 ${text.memberCount}`, role: text.owner, color: '#C026D3' },
+    { icon: '🎮', name: 'Gamer Thailand', count: `8,765 ${text.memberCount}`, role: text.admin, color: '#2563EB' },
+    { icon: '☕', name: 'Coffee Lovers', count: `4,321 ${text.memberCount}`, role: text.member, color: '#F59E0B' },
+    { icon: '📸', name: 'Photo Journey', count: `2,100 ${text.memberCount}`, role: text.member, color: '#EC4899' },
+  ];
+
   return (
     <View style={styles.root}>
-      <ScreenTitle title="สร้างสถานะ" subtitle="เลือกโชว์ Status ส่วนตัว หรือสัญลักษณ์กลุ่ม" />
+      <ScreenTitle title={text.createStatus} subtitle={text.createStatusSubtitle} />
 
       <View style={styles.tabRow}>
-        <Text style={styles.tabActive}>เข้าร่วม</Text>
-        <Text style={styles.tab}>จัดการ</Text>
-        <Text style={styles.tab}>คำขอ</Text>
+        <Text style={styles.tabActive}>{text.joined}</Text>
+        <Text style={styles.tab}>{text.manage}</Text>
+        <Text style={styles.tab}>{text.requests}</Text>
       </View>
 
       <View style={styles.list}>
@@ -35,7 +38,6 @@ export default function GroupsScreen() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#070814' },
   tabRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 38, marginTop: 4 },

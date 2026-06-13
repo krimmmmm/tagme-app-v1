@@ -1,21 +1,24 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import ScreenTitle from '../components/ScreenTitle';
+import { LanguageKey, t } from '../i18n/translations';
 
-const chats = [
-  { avatar: '😎', name: '🎌 Anime Club', msg: 'Beam: เจอกันที่งานนะครับ! 🔥', time: '14:30', badge: '12' },
-  { avatar: '👩🏻', name: '☕ Coffee Lovers', msg: 'Mint: ใครว่างไปกาแฟบ้าง? 😊', time: '13:45', badge: '5' },
-  { avatar: '🎮', name: '🎮 Gamer Thailand', msg: 'Ton: พร้อมลุยคืนนี้ 3 ทุ่ม! 🎮', time: '12:20', badge: '3' },
-  { avatar: '👧🏻', name: 'Praew', msg: 'คุณ: ได้เลยครับ 👍', time: '11:15', badge: '' },
-  { avatar: '📸', name: '📸 Group: Photo Journey', msg: 'Kook: รูปสวยมากครับ!', time: '10:05', badge: '' },
-];
+export default function FeedScreen({ language }: { language: LanguageKey }) {
+  const text = t[language];
 
-export default function FeedScreen() {
+  const chats = [
+    { avatar: '😎', name: '🎌 Anime Club', msg: 'Beam: เจอกันที่งานนะครับ! 🔥', time: '14:30', badge: '12' },
+    { avatar: '👩🏻', name: '☕ Coffee Lovers', msg: 'Mint: ใครว่างไปกาแฟบ้าง? 😊', time: '13:45', badge: '5' },
+    { avatar: '🎮', name: '🎮 Gamer Thailand', msg: 'Ton: พร้อมลุยคืนนี้ 3 ทุ่ม! 🎮', time: '12:20', badge: '3' },
+    { avatar: '👧🏻', name: 'Praew', msg: 'คุณ: ได้เลยครับ 👍', time: '11:15', badge: '' },
+    { avatar: '📸', name: '📸 Group: Photo Journey', msg: 'Kook: รูปสวยมากครับ!', time: '10:05', badge: '' },
+  ];
+
   return (
     <View style={styles.root}>
-      <ScreenTitle title="แชท" subtitle="ข้อความส่วนตัวและกลุ่มของคุณ" />
+      <ScreenTitle title={text.chatTitle} subtitle={text.chatSubtitle} />
 
-      <View style={styles.search}><Text style={styles.searchText}>⌕ ค้นหา</Text></View>
+      <View style={styles.search}><Text style={styles.searchText}>⌕ {text.search}</Text></View>
 
       <ScrollView contentContainerStyle={styles.list}>
         {chats.map((chat) => (
@@ -35,7 +38,6 @@ export default function FeedScreen() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#070814' },
   search: { marginHorizontal: 20, height: 48, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.07)', justifyContent: 'center', paddingHorizontal: 16 },

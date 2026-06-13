@@ -2,8 +2,10 @@ import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Image, Platform } from 'react-native';
 import TagBadge from '../components/TagBadge';
 import ScreenTitle from '../components/ScreenTitle';
+import { LanguageKey, t } from '../i18n/translations';
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ language }: { language: LanguageKey }) {
+  const text = t[language];
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const fileInputRef = useRef<any>(null);
 
@@ -19,7 +21,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.root}>
-      <ScreenTitle title="โปรไฟล์" subtitle="ตั้งค่าตัวตนที่จะแสดงในโลกจริง" />
+      <ScreenTitle title={text.profileTitle} subtitle={text.profileSubtitle} />
 
       {Platform.OS === 'web' ? (
         <input ref={fileInputRef} type="file" accept="image/*" onChange={onWebImageSelected} style={{ display: 'none' }} />
@@ -42,22 +44,22 @@ export default function ProfileScreen() {
         </View>
 
         <Pressable style={styles.uploadBtn} onPress={openImagePicker}>
-          <Text style={styles.uploadText}>{avatarUri ? 'เปลี่ยนรูปโปรไฟล์' : 'Upload รูปโปรไฟล์'}</Text>
+          <Text style={styles.uploadText}>{avatarUri ? text.changeProfile : text.uploadProfile}</Text>
         </Pressable>
 
         <Text style={styles.bio}>Coffee Addict ☕ | Photographer 📸{'\n'}Travel | Working Remotely</Text>
 
         <View style={styles.stats}>
-          <View><Text style={styles.statNo}>128</Text><Text style={styles.statLabel}>เพื่อน</Text></View>
-          <View><Text style={styles.statNo}>23</Text><Text style={styles.statLabel}>กลุ่ม</Text></View>
-          <View><Text style={styles.statNo}>1.2K</Text><Text style={styles.statLabel}>ผู้ติดตาม</Text></View>
+          <View><Text style={styles.statNo}>128</Text><Text style={styles.statLabel}>{text.friends}</Text></View>
+          <View><Text style={styles.statNo}>23</Text><Text style={styles.statLabel}>{text.groups}</Text></View>
+          <View><Text style={styles.statNo}>1.2K</Text><Text style={styles.statLabel}>{text.followers}</Text></View>
         </View>
 
-        <Pressable style={styles.editBtn}><Text style={styles.editText}>แก้ไขโปรไฟล์</Text></Pressable>
+        <Pressable style={styles.editBtn}><Text style={styles.editText}>{text.editProfile}</Text></Pressable>
 
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>สัญลักษณ์ที่ใช้</Text>
-          <Text style={styles.link}>ดูทั้งหมด</Text>
+          <Text style={styles.sectionTitle}>{text.usedSymbols}</Text>
+          <Text style={styles.link}>{text.seeAll}</Text>
         </View>
 
         <View style={styles.symbolGrid}>
@@ -71,13 +73,12 @@ export default function ProfileScreen() {
         </View>
 
         <Pressable style={styles.save}>
-          <Text style={styles.saveText}>บันทึก</Text>
+          <Text style={styles.saveText}>{text.save}</Text>
         </Pressable>
       </View>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   root: { flex: 1 },
   card: { margin: 20, borderRadius: 28, padding: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: '#12142B' },

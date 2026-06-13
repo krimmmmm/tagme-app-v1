@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { LanguageKey, t } from '../i18n/translations';
 
-const people = [
-  { tag: '☕ Coffee Lover', left: '38%', top: '31%', color: '#D97706', distance: '5m' },
-  { tag: '🎌 Anime Club', left: '10%', top: '24%', color: '#A855F7', distance: '8m' },
-  { tag: '🎮 Gamer\\nLooking for Team', left: '60%', top: '25%', color: '#16A34A', distance: '7m' },
-];
-
-const radarItems = [
-  { name: '🎌 Anime Club', detail: '12 คน', distance: '8m' },
-  { name: '☕ Coffee Lovers', detail: '7 คน', distance: '10m' },
-  { name: '🎮 Gamer Thailand', detail: '15 คน', distance: '12m' },
-  { name: '🏍 BigBike Club', detail: '4 คน', distance: '15m' },
-];
-
-export default function CameraScreen() {
+export default function CameraScreen({ language }: { language: LanguageKey }) {
+  const text = t[language];
   const [mode, setMode] = useState<'ar' | 'radar'>('ar');
+
+  const people = [
+    { tag: '☕ Coffee Lover', left: '38%', top: '31%', color: '#D97706', distance: '5m' },
+    { tag: '🎌 Anime Club', left: '10%', top: '24%', color: '#A855F7', distance: '8m' },
+    { tag: '🎮 Gamer\\nLooking for Team', left: '60%', top: '25%', color: '#16A34A', distance: '7m' },
+  ];
+
+  const radarItems = [
+    { name: '🎌 Anime Club', detail: `12 ${text.people}`, distance: '8m' },
+    { name: '☕ Coffee Lovers', detail: `7 ${text.people}`, distance: '10m' },
+    { name: '🎮 Gamer Thailand', detail: `15 ${text.people}`, distance: '12m' },
+    { name: '🏍 BigBike Club', detail: `4 ${text.people}`, distance: '15m' },
+  ];
 
   return (
     <View style={styles.root}>
@@ -35,8 +37,8 @@ export default function CameraScreen() {
       {mode === 'ar' ? (
         <View style={styles.cameraArea}>
           <View style={styles.arHeader}>
-            <Text style={styles.nearby}>☘ 5 คนใกล้คุณ</Text>
-            <Text style={styles.filter}>⏷ ทั้งหมด</Text>
+            <Text style={styles.nearby}>☘ {text.nearby}</Text>
+            <Text style={styles.filter}>⏷ {text.all}</Text>
           </View>
 
           <View style={styles.street}>
@@ -56,14 +58,14 @@ export default function CameraScreen() {
           </View>
 
           <View style={styles.sideButtons}>
-            <Text style={styles.sideBtn}>⭐\\nไอเท็ม</Text>
-            <Text style={styles.sideBtn}>👥\\nกลุ่ม</Text>
-            <Text style={styles.sideBtn}>🛒\\nร้านค้า</Text>
+            <Text style={styles.sideBtn}>⭐{'\n'}Item</Text>
+            <Text style={styles.sideBtn}>👥{'\n'}{text.tabGroups}</Text>
+            <Text style={styles.sideBtn}>🛒{'\n'}{text.tabShop}</Text>
           </View>
         </View>
       ) : (
         <View style={styles.radarPage}>
-          <Text style={styles.radarTitle}>กลุ่มและคนรอบตัวคุณ</Text>
+          <Text style={styles.radarTitle}>{text.radarTitle}</Text>
           <View style={styles.radarCircle}>
             <View style={styles.ring1} />
             <View style={styles.ring2} />
@@ -92,7 +94,6 @@ export default function CameraScreen() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#070814' },
   topBar: { height: 78, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 },

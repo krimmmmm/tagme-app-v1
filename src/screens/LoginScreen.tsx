@@ -1,44 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
+import { LanguageKey, languages, t } from '../i18n/translations';
 
-type LanguageKey = 'th' | 'en' | 'zh';
-
-const languages: Array<{ key: LanguageKey; label: string; flag: string }> = [
-  { key: 'th', label: 'ไทย', flag: '🇹🇭' },
-  { key: 'en', label: 'EN', flag: '🇬🇧' },
-  { key: 'zh', label: '中文', flag: '🇨🇳' },
-];
-
-const copy = {
-  th: {
-    main: 'แสดงตัวตนของคุณในโลกจริง',
-    phone: 'เข้าสู่ระบบด้วยเบอร์โทรศัพท์',
-    google: 'เข้าสู่ระบบด้วย Google',
-    apple: 'เข้าสู่ระบบด้วย Apple',
-    email: 'เข้าสู่ระบบด้วยอีเมล',
-    signup: 'ยังไม่มีบัญชี? สมัครสมาชิก',
-  },
-  en: {
-    main: 'Show who you are in the real world',
-    phone: 'Sign in with phone number',
-    google: 'Sign in with Google',
-    apple: 'Sign in with Apple',
-    email: 'Sign in with email',
-    signup: "Don’t have an account? Sign up",
-  },
-  zh: {
-    main: '在现实世界中展示你的身份',
-    phone: '使用电话号码登录',
-    google: '使用 Google 登录',
-    apple: '使用 Apple 登录',
-    email: '使用电子邮件登录',
-    signup: '还没有账号？注册',
-  },
-};
-
-export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  const [language, setLanguage] = useState<LanguageKey>('th');
-  const text = copy[language];
+export default function LoginScreen({
+  language,
+  onLanguageChange,
+  onLogin,
+}: {
+  language: LanguageKey;
+  onLanguageChange: (language: LanguageKey) => void;
+  onLogin: () => void;
+}) {
+  const text = t[language];
 
   return (
     <View style={styles.root}>
@@ -46,9 +19,15 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
         {languages.map((item) => {
           const active = item.key === language;
           return (
-            <Pressable key={item.key} onPress={() => setLanguage(item.key)} style={[styles.languageBtn, active && styles.languageBtnActive]}>
+            <Pressable
+              key={item.key}
+              onPress={() => onLanguageChange(item.key)}
+              style={[styles.languageBtn, active && styles.languageBtnActive]}
+            >
               <Text style={styles.flag}>{item.flag}</Text>
-              <Text style={[styles.languageText, active && styles.languageTextActive]}>{item.label}</Text>
+              <Text style={[styles.languageText, active && styles.languageTextActive]}>
+                {item.label}
+              </Text>
             </Pressable>
           );
         })}
@@ -58,32 +37,32 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
       <Text style={styles.brand}>TagMe</Text>
       <Text style={styles.tagline}>TAG. CONNECT. BE SEEN.</Text>
-      <Text style={styles.mainText}>{text.main}</Text>
+      <Text style={styles.mainText}>{text.loginMain}</Text>
 
       <View style={styles.card}>
         <Pressable style={styles.primaryBtn} onPress={onLogin}>
-          <Text style={styles.primaryText}>{text.phone}</Text>
+          <Text style={styles.primaryText}>{text.phoneLogin}</Text>
         </Pressable>
 
         <Pressable style={styles.secondaryBtn} onPress={onLogin}>
           <Text style={styles.googleIcon}>G</Text>
-          <Text style={styles.secondaryText}>{text.google}</Text>
+          <Text style={styles.secondaryText}>{text.googleLogin}</Text>
         </Pressable>
 
         <Pressable style={styles.secondaryBtn} onPress={onLogin}>
           <Text style={styles.appleIcon}>●</Text>
-          <Text style={styles.secondaryText}>{text.apple}</Text>
+          <Text style={styles.secondaryText}>{text.appleLogin}</Text>
         </Pressable>
 
         <View style={styles.dividerRow}>
           <View style={styles.line} />
-          <Text style={styles.orText}>หรือ</Text>
+          <Text style={styles.orText}>{text.or}</Text>
           <View style={styles.line} />
         </View>
 
         <Pressable style={styles.secondaryBtn} onPress={onLogin}>
           <Text style={styles.btnIcon}>✉️</Text>
-          <Text style={styles.secondaryText}>{text.email}</Text>
+          <Text style={styles.secondaryText}>{text.emailLogin}</Text>
         </Pressable>
 
         <Text style={styles.signup}>{text.signup}</Text>
