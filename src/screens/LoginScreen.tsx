@@ -4,7 +4,7 @@ import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
 export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   return (
     <View style={styles.root}>
-      <View style={styles.logoGlow}>
+      <View style={styles.logoContainer}>
         <Image
           source={require('../../assets/tagme-logo.png')}
           style={styles.logoImage}
@@ -47,28 +47,23 @@ const styles = StyleSheet.create({
     padding: 24,
   },
 
-  logoGlow: {
-    width: 126,
-    height: 126,
+  logoContainer: {
+    width: 148,
+    height: 148,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#FF4DE8',
-    shadowOpacity: 0.85,
-    shadowRadius: 30,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 20,
   },
 
   logoImage: {
-    width: 120,
-    height: 120,
+    width: 142,
+    height: 142,
   },
 
   brand: {
     fontSize: 46,
     color: '#fff',
     fontWeight: '900',
-    marginTop: 18,
+    marginTop: 10,
   },
 
   tagline: {
