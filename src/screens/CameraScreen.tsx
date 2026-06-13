@@ -160,27 +160,17 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
 
           const video = videoRef.current;
           const videoWidth = video?.videoWidth || 1280;
-          const videoHeight = video?.videoHeight || 720;
 
           const xCenterRaw = Number(box.xCenter ?? 0.5);
-          const yCenterRaw = Number(box.yCenter ?? 0.5);
-          const heightRaw = Number(box.height ?? 0.25);
-
           const xCenter = xCenterRaw > 1 ? xCenterRaw / videoWidth : xCenterRaw;
-          const yCenter = yCenterRaw > 1 ? yCenterRaw / videoHeight : yCenterRaw;
-          const boxHeight = heightRaw > 1 ? heightRaw / videoHeight : heightRaw;
 
           // Video is mirrored by CSS scaleX(-1), so x must be mirrored too.
-          // Keep the AR tag centered with the user's face.
+          // Keep horizontal tracking only.
           const visualX = (1 - xCenter) * 100;
 
-          // Head top position from detected face box.
-          const headTopY = (yCenter - boxHeight / 2) * 100;
-
-          // Move tag clearly above the head.
-          // Increase this number if you want it even higher.
-          const tagAboveHeadOffset = Math.max(14, boxHeight * 100 * 0.55);
-          const tagTop = headTopY - tagAboveHeadOffset;
+          // Fixed top position: always show AR tag at the top edge of the camera frame.
+          // This prevents the tag from covering the user's face.
+          const fixedTopEdge = 2;
 
           setTags((items) =>
             items.map((item) =>
@@ -188,7 +178,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                 ? {
                     ...item,
                     left: clamp(visualX - 12, 3, 82),
-                    top: clamp(tagTop, 1, 58),
+                    top: fixedTopEdge,
                   }
                 : item
             )
