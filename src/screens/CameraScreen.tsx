@@ -17,13 +17,43 @@ const initialTags: Tag[] = [
   { id: '3', emoji: '🎮', title: 'Gamer', left: 66, top: 26, color: '#22C55E' },
 ];
 
+const MEDIAPIPE_VERSION = '0.4.1646425229';
+const MEDIAPIPE_BASE_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@${MEDIAPIPE_VERSION}`;
+
+function loadScript(src: string) {
+  return new Promise<void>((resolve, reject) => {
+    if (typeof document === 'undefined') {
+      reject(new Error('document is not available'));
+      return;
+    }
+
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Cannot load script: ${src}`));
+    document.body.appendChild(script);
+  });
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
 export default function CameraScreen({ language }: { language: LanguageKey }) {
   const text = t[language];
 
   const videoRef = useRef<any>(null);
   const streamRef = useRef<any>(null);
   const detectorRef = useRef<any>(null);
-  const loopRef = useRef<any>(null);
+  const loopRef = useRef<number | null>(null);
+  const isDetectingRef = useRef(false);
 
   const [mode, setMode] = useState<'ar' | 'radar'>('ar');
   const [cameraReady, setCameraReady] = useState(false);
@@ -42,7 +72,14 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
 
     async function startCamera() {
       try {
-        const stream = await (navigator as any).mediaDevices.getUserMedia({
+        const mediaDevices = (navigator as any)?.mediaDevices;
+
+        if (!mediaDevices?.getUserMedia) {
+          setCameraError('Browser นี้ยังไม่รองรับการเปิดกล้อง');
+          return;
+        }
+
+        const stream = await mediaDevices.getUserMedia({
           video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: false,
         });
@@ -72,63 +109,101 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
   }, []);
 
   useEffect(() => {
-    if (!faceMode || Platform.OS !== 'web') return;
+    if (Platform.OS !== 'web') return;
 
     let active = true;
 
-    async function setupDetector() {
-      try {
-        const FaceDetectorClass = (window as any).FaceDetector;
+    async function startMediaPipeFaceFollow() {
+      if (!faceMode) {
+        setFaceStatus('Face Follow: Off');
+        if (loopRef.current) cancelAnimationFrame(loopRef.current);
+        return;
+      }
 
-        if (!FaceDetectorClass) {
-          setFaceStatus('Face Follow: Browser ยังไม่รองรับ FaceDetector');
+      if (!cameraReady) {
+        setFaceStatus('Face Follow: รอกล้องพร้อมใช้งาน...');
+        return;
+      }
+
+      try {
+        setFaceStatus('Face Follow: กำลังโหลด MediaPipe...');
+        await loadScript(`${MEDIAPIPE_BASE_URL}/face_detection.js`);
+
+        const FaceDetection = (window as any).FaceDetection;
+        if (!FaceDetection) {
+          setFaceStatus('Face Follow: โหลด MediaPipe ไม่สำเร็จ');
           return;
         }
 
-        detectorRef.current = new FaceDetectorClass({
-          fastMode: true,
-          maxDetectedFaces: 3,
+        const detector = new FaceDetection({
+          locateFile: (file: string) => `${MEDIAPIPE_BASE_URL}/${file}`,
         });
 
-        setFaceStatus('Face Follow: Searching...');
+        detector.setOptions({
+          model: 'short',
+          minDetectionConfidence: 0.55,
+        });
+
+        detector.onResults((results: any) => {
+          const detections = results?.detections || [];
+
+          if (!detections.length) {
+            setFaceStatus('Face Follow: ไม่พบใบหน้า');
+            return;
+          }
+
+          const box = detections[0]?.boundingBox;
+          if (!box) {
+            setFaceStatus('Face Follow: พบใบหน้า แต่ยังอ่านตำแหน่งไม่ได้');
+            return;
+          }
+
+          const video = videoRef.current;
+          const videoWidth = video?.videoWidth || 1280;
+          const videoHeight = video?.videoHeight || 720;
+
+          const xCenterRaw = Number(box.xCenter ?? 0.5);
+          const yCenterRaw = Number(box.yCenter ?? 0.5);
+          const heightRaw = Number(box.height ?? 0.25);
+
+          const xCenter = xCenterRaw > 1 ? xCenterRaw / videoWidth : xCenterRaw;
+          const yCenter = yCenterRaw > 1 ? yCenterRaw / videoHeight : yCenterRaw;
+          const boxHeight = heightRaw > 1 ? heightRaw / videoHeight : heightRaw;
+
+          // Video is mirrored by CSS scaleX(-1), so x must be mirrored too.
+          const visualX = (1 - xCenter) * 100;
+          const visualTop = (yCenter - boxHeight / 2) * 100;
+
+          setTags((items) =>
+            items.map((item) =>
+              item.id === selectedTagId
+                ? {
+                    ...item,
+                    left: clamp(visualX - 12, 3, 82),
+                    top: clamp(visualTop - 8, 5, 76),
+                  }
+                : item
+            )
+          );
+
+          setFaceStatus(`Face Follow: เจอใบหน้า ${detections.length} คน`);
+        });
+
+        detectorRef.current = detector;
 
         const detectLoop = async () => {
-          try {
-            const video = videoRef.current;
+          if (!active || !faceMode) return;
 
-            if (!active || !video || video.readyState < 2) {
-              loopRef.current = requestAnimationFrame(detectLoop);
-              return;
+          const video = videoRef.current;
+          if (video && video.readyState >= 2 && !isDetectingRef.current) {
+            try {
+              isDetectingRef.current = true;
+              await detector.send({ image: video });
+            } catch {
+              setFaceStatus('Face Follow: ตรวจจับไม่สำเร็จ');
+            } finally {
+              isDetectingRef.current = false;
             }
-
-            const faces = await detectorRef.current.detect(video);
-
-            if (faces?.length) {
-              const firstFace = faces[0].boundingBox;
-              const videoWidth = video.videoWidth || 1280;
-              const videoHeight = video.videoHeight || 720;
-
-              const centerX = ((firstFace.x + firstFace.width / 2) / videoWidth) * 100;
-              const topY = (firstFace.y / videoHeight) * 100;
-
-              setTags((items) =>
-                items.map((item) =>
-                  item.id === selectedTagId
-                    ? {
-                        ...item,
-                        left: Math.max(5, Math.min(82, centerX - 13)),
-                        top: Math.max(8, Math.min(75, topY - 10)),
-                      }
-                    : item
-                )
-              );
-
-              setFaceStatus(`Face Follow: เจอใบหน้า ${faces.length} คน`);
-            } else {
-              setFaceStatus('Face Follow: ไม่พบใบหน้า');
-            }
-          } catch {
-            setFaceStatus('Face Follow: ตรวจจับไม่สำเร็จ');
           }
 
           loopRef.current = requestAnimationFrame(detectLoop);
@@ -136,17 +211,17 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
 
         detectLoop();
       } catch {
-        setFaceStatus('Face Follow: ไม่สามารถเริ่มระบบได้');
+        setFaceStatus('Face Follow: โหลด MediaPipe ไม่สำเร็จ กรุณารีเฟรชและลองใหม่');
       }
     }
 
-    setupDetector();
+    startMediaPipeFaceFollow();
 
     return () => {
       active = false;
       if (loopRef.current) cancelAnimationFrame(loopRef.current);
     };
-  }, [faceMode, selectedTagId]);
+  }, [faceMode, cameraReady, selectedTagId]);
 
   const applyStatus = () => {
     setTags((items) =>
@@ -293,26 +368,17 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
             </Pressable>
           </View>
 
-          <Text style={styles.hint}>
-            เปิด Face Follow แล้วกล่องที่เลือกจะพยายามตามใบหน้าบนกล้อง
-          </Text>
+          <Text style={styles.hint}>ใช้ MediaPipe Face Detection: เปิด ON แล้วกล่องที่เลือกจะตามใบหน้า</Text>
         </View>
       </View>
     </View>
   );
 }
 
-function TopBar({
-  mode,
-  setMode,
-}: {
-  mode: 'ar' | 'radar';
-  setMode: (mode: 'ar' | 'radar') => void;
-}) {
+function TopBar({ mode, setMode }: { mode: 'ar' | 'radar'; setMode: (mode: 'ar' | 'radar') => void }) {
   return (
     <View style={styles.topBar}>
       <Text style={styles.profileIcon}>👤</Text>
-
       <View style={styles.segment}>
         <Pressable onPress={() => setMode('ar')} style={[styles.segmentBtn, mode === 'ar' && styles.segmentActive]}>
           <Text style={[styles.segmentText, mode === 'ar' && styles.segmentTextActive]}>AR</Text>
@@ -321,7 +387,6 @@ function TopBar({
           <Text style={[styles.segmentText, mode === 'radar' && styles.segmentTextActive]}>Radar</Text>
         </Pressable>
       </View>
-
       <Text style={styles.search}>⌕</Text>
     </View>
   );
@@ -337,12 +402,10 @@ const styles = StyleSheet.create({
   segmentActive: { backgroundColor: '#3345FF' },
   segmentText: { color: '#9EA2C5', fontWeight: '800' },
   segmentTextActive: { color: '#fff' },
-
   cameraArea: { flex: 1 },
   arHeader: { position: 'absolute', zIndex: 10, left: 20, right: 20, top: 4, flexDirection: 'row', justifyContent: 'space-between' },
   nearby: { color: '#86EFAC', backgroundColor: 'rgba(21,128,61,0.32)', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, fontWeight: '900' },
   filter: { color: '#fff', backgroundColor: 'rgba(255,255,255,0.14)', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, fontWeight: '900' },
-
   cameraFrame: { flex: 1, margin: 16, borderRadius: 26, backgroundColor: '#111827', overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: 'rgba(102,233,255,0.18)' },
   mobileMock: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111827' },
   mobileMockText: { color: '#fff', fontSize: 22, fontWeight: '900' },
@@ -350,11 +413,9 @@ const styles = StyleSheet.create({
   fallbackTitle: { color: '#fff', fontSize: 28, fontWeight: '900' },
   fallbackText: { color: '#A8ACCF', marginTop: 12, textAlign: 'center', lineHeight: 22 },
   dimOverlay: { position: 'absolute', inset: 0 as any, backgroundColor: 'rgba(0,0,0,0.16)' },
-
   floatTag: { position: 'absolute', zIndex: 20, borderWidth: 1.4, borderRadius: 14, paddingHorizontal: 13, paddingVertical: 9, shadowColor: '#C026D3', shadowOpacity: 0.65, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } },
   floatText: { color: '#fff', fontWeight: '900', textAlign: 'center', fontSize: 15 },
   distanceBubble: { position: 'absolute', zIndex: 20, color: '#fff', backgroundColor: '#6B7280', padding: 8, borderRadius: 999, fontWeight: '900' },
-
   testPanel: { marginHorizontal: 16, marginBottom: 12, borderRadius: 22, backgroundColor: '#12142B', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', padding: 14 },
   panelTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   panelTitle: { color: '#fff', fontWeight: '900', fontSize: 17 },
@@ -367,7 +428,6 @@ const styles = StyleSheet.create({
   applyBtn: { width: 82, height: 46, borderRadius: 14, backgroundColor: '#5B4BFF', alignItems: 'center', justifyContent: 'center' },
   applyText: { color: '#fff', fontWeight: '900' },
   hint: { color: '#8B8EA6', marginTop: 10, fontSize: 12 },
-
   radarPage: { flex: 1, padding: 20 },
   radarTitle: { color: '#fff', fontSize: 22, fontWeight: '900', marginBottom: 16 },
   radarCircle: { height: 300, borderRadius: 150, borderWidth: 1, borderColor: 'rgba(102,233,255,0.35)', position: 'relative', alignItems: 'center', justifyContent: 'center' },
