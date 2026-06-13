@@ -322,16 +322,32 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                     left: `${tag.left}%` as any,
                     top: `${tag.top}%` as any,
                     borderColor: tag.color,
-                    backgroundColor: active ? 'rgba(91,75,255,0.92)' : 'rgba(20,20,40,0.82)',
+                    backgroundColor: active ? 'transparent' : 'rgba(20,20,40,0.82)',
                   },
                 ]}
               >
                 {active ? (
-                  <Image
-                    source={require('../../assets/frames/cat-neon-frame-epic.png')}
-                    style={styles.catFrameImage}
-                    resizeMode="contain"
-                  />
+                  <View style={styles.epicCardWrap}>
+                    <Image
+                      source={require('../../assets/frames/cat-neon-frame-epic-empty.png')}
+                      style={styles.catFrameImage}
+                      resizeMode="contain"
+                    />
+
+                    <View style={styles.dynamicAvatar}>
+                      <Text style={styles.dynamicAvatarText}>👤</Text>
+                    </View>
+
+                    <Text style={styles.dynamicName}>Tadchai</Text>
+
+                    <View style={styles.dynamicLevel}>
+                      <Text style={styles.dynamicLevelText}>Lv.25</Text>
+                    </View>
+
+                    <Text style={styles.dynamicStatus}>{tag.emoji} {tag.title}</Text>
+                    <Text style={styles.dynamicMessage}>💬 {myStatus}</Text>
+                    <Text style={styles.dynamicDistance}>⌖ 5m away</Text>
+                  </View>
                 ) : (
                   <Text style={styles.floatText}>{tag.emoji} {tag.title}</Text>
                 )}
@@ -420,18 +436,104 @@ const styles = StyleSheet.create({
   floatTag: { position: 'absolute', zIndex: 20, borderWidth: 1.4, borderRadius: 14, paddingHorizontal: 13, paddingVertical: 9, shadowColor: '#C026D3', shadowOpacity: 0.65, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } },
 
   floatTagEpic: {
-    width: 360,
-    height: 150,
+    width: 400,
+    height: 160,
     paddingHorizontal: 0,
     paddingVertical: 0,
     borderWidth: 0,
+    borderColor: 'transparent',
     backgroundColor: 'transparent',
     shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+    overflow: 'visible',
+  },
+
+  epicCardWrap: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+    backgroundColor: 'transparent',
   },
 
   catFrameImage: {
+    position: 'absolute',
     width: '100%',
     height: '100%',
+    backgroundColor: 'transparent',
+  },
+
+  dynamicAvatar: {
+    position: 'absolute',
+    left: 58,
+    top: 58,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  dynamicAvatarText: {
+    fontSize: 24,
+  },
+
+  dynamicName: {
+    position: 'absolute',
+    left: 172,
+    top: 50,
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '900',
+    textShadowColor: '#9D5CFF',
+    textShadowRadius: 8,
+  },
+
+  dynamicLevel: {
+    position: 'absolute',
+    left: 300,
+    top: 56,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: '#66E9FF',
+    backgroundColor: 'rgba(7,8,20,0.45)',
+  },
+
+  dynamicLevelText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+
+  dynamicStatus: {
+    position: 'absolute',
+    left: 172,
+    top: 84,
+    color: '#D8B4FE',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+
+  dynamicMessage: {
+    position: 'absolute',
+    left: 172,
+    top: 112,
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+    maxWidth: 175,
+  },
+
+  dynamicDistance: {
+    position: 'absolute',
+    left: 172,
+    top: 132,
+    color: '#66E9FF',
+    fontSize: 12,
+    fontWeight: '900',
   },
 
   floatText: { color: '#fff', fontWeight: '900', textAlign: 'center', fontSize: 15 },
