@@ -1,0 +1,7 @@
+import React from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import TagBadge from '../components/TagBadge';
+import ScreenTitle from '../components/ScreenTitle';
+export default function ProfileScreen(){return <View style={styles.root}><ScreenTitle title="Profile" subtitle="ตั้งค่าตัวตนที่จะแสดงในโลกจริง"/><LinearGradient colors={["#191B3A","#101124"]} style={styles.card}><View style={styles.avatar}><Text style={{fontSize:42}}>😎</Text></View><Text style={styles.name}>Beam</Text><Text style={styles.handle}>@beamm.me</Text><View style={{gap:12, marginTop:18}}><TagBadge icon="💼" title="Project Manager" color="#2563EB"/><TagBadge icon="☕" title="Coffee Lover" color="#F59E0B"/><TagBadge icon="♌" title="Solar Leo" color="#F97316"/></View><Pressable style={styles.save}><Text style={styles.saveText}>บันทึก Status</Text></Pressable></LinearGradient></View>}
+const styles=StyleSheet.create({root:{flex:1},card:{margin:20,borderRadius:28,padding:22,borderWidth:1,borderColor:'rgba(255,255,255,0.1)'},avatar:{width:90,height:90,borderRadius:45,backgroundColor:'rgba(255,255,255,0.12)',alignItems:'center',justifyContent:'center'},name:{color:'#fff',fontSize:28,fontWeight:'900',marginTop:14},handle:{color:'#A8ACCF',fontSize:14},save:{height:54,borderRadius:16,backgroundColor:'#5B4BFF',alignItems:'center',justifyContent:'center',marginTop:22},saveText:{color:'#fff',fontWeight:'900'}})
