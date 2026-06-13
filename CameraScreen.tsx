@@ -182,7 +182,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                 ? {
                     ...item,
                     left: clamp(visualX - 12, 3, 82),
-                    top: clamp(visualTop - 18, 3, 70),
+                    top: clamp(visualTop - 32, 1, 62),
                   }
                 : item
             )
