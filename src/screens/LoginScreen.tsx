@@ -1,35 +1,35 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   return (
-    <View style={styles.container}>
-      <View style={styles.logoBox}><View style={styles.logo}><Text style={styles.logoT}>T</Text></View></View>
+    <View style={styles.root}>
+      <View style={styles.logoBox}><Text style={styles.logoText}>T</Text></View>
       <Text style={styles.brand}>TagMe</Text>
       <Text style={styles.tagline}>TAG. CONNECT. BE SEEN.</Text>
       <Text style={styles.thai}>แสดงตัวตนของคุณในโลกจริง</Text>
       <View style={styles.card}>
-        <Pressable style={styles.primaryBtn} onPress={onLogin}><Ionicons name="call" color="#fff" size={18}/><Text style={styles.primaryText}>เข้าสู่ระบบด้วยเบอร์โทรศัพท์</Text></Pressable>
-        <Pressable style={styles.secondaryBtn} onPress={onLogin}><Ionicons name="logo-google" color="#fff" size={18}/><Text style={styles.secondaryText}>เข้าสู่ระบบด้วย Google</Text></Pressable>
-        <Pressable style={styles.secondaryBtn} onPress={onLogin}><Ionicons name="mail" color="#fff" size={18}/><Text style={styles.secondaryText}>เข้าสู่ระบบด้วยอีเมล</Text></Pressable>
+        <Pressable style={styles.primaryBtn} onPress={onLogin}><Text style={styles.btnIcon}>📞</Text><Text style={styles.primaryText}>เข้าสู่ระบบด้วยเบอร์โทรศัพท์</Text></Pressable>
+        <Pressable style={styles.secondaryBtn} onPress={onLogin}><Text style={styles.btnIcon}>G</Text><Text style={styles.secondaryText}>เข้าสู่ระบบด้วย Google</Text></Pressable>
+        <Pressable style={styles.secondaryBtn} onPress={onLogin}><Text style={styles.btnIcon}>✉️</Text><Text style={styles.secondaryText}>เข้าสู่ระบบด้วยอีเมล</Text></Pressable>
+        <Text style={styles.signup}>ยังไม่มีบัญชี? สมัครสมาชิก</Text>
       </View>
-      <Text style={styles.footer}>เริ่มต้นสร้าง AR Status ของคุณ</Text>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
-  container:{ flex:1, alignItems:'center', justifyContent:'center', padding:24, backgroundColor:'#070814' },
-  logoBox:{ shadowColor:'#FF4DE8', shadowOpacity:0.8, shadowRadius:30 },
-  logo:{ width:116, height:116, borderRadius:28, alignItems:'center', justifyContent:'center', backgroundColor:'#8B5CF6' },
-  logoT:{ color:'#fff', fontSize:70, fontWeight:'900', textShadowColor:'#fff', textShadowRadius:12 },
-  brand:{ color:'#fff', fontSize:54, fontWeight:'900', marginTop:22 },
-  tagline:{ color:'#7CEBFF', fontSize:15, fontWeight:'800', letterSpacing:2, marginTop:6 },
-  thai:{ color:'#D9D9F5', fontSize:20, marginTop:22, marginBottom:30 },
-  card:{ width:'100%', gap:12 },
-  primaryBtn:{ height:56, borderRadius:16, flexDirection:'row', gap:10, alignItems:'center', justifyContent:'center', backgroundColor:'#8B2BFF' },
-  primaryText:{ color:'#fff', fontWeight:'800', fontSize:15 },
-  secondaryBtn:{ height:54, borderRadius:16, flexDirection:'row', gap:10, alignItems:'center', justifyContent:'center', backgroundColor:'rgba(255,255,255,0.08)', borderWidth:1, borderColor:'rgba(255,255,255,0.08)' },
-  secondaryText:{ color:'#fff', fontWeight:'700', fontSize:15 },
-  footer:{ color:'#8B8EA6', marginTop:24 }
+  root:{flex:1,backgroundColor:'#070814',alignItems:'center',justifyContent:'center',padding:24},
+  logoBox:{width:96,height:96,borderRadius:28,alignItems:'center',justifyContent:'center',backgroundColor:'#8B5CF6',shadowColor:'#FF4DE8',shadowOpacity:.7,shadowRadius:24},
+  logoText:{fontSize:58,color:'#fff',fontWeight:'900'},
+  brand:{fontSize:46,color:'#fff',fontWeight:'900',marginTop:20},
+  tagline:{color:'#66E9FF',fontWeight:'800',letterSpacing:2,marginTop:6},
+  thai:{color:'#D8D9FF',fontSize:20,marginTop:20,textAlign:'center'},
+  card:{width:'100%',maxWidth:420,marginTop:34,gap:12},
+  primaryBtn:{height:54,borderRadius:16,backgroundColor:'#8B5CF6',alignItems:'center',justifyContent:'center',flexDirection:'row',gap:10},
+  secondaryBtn:{height:54,borderRadius:16,backgroundColor:'rgba(255,255,255,0.08)',borderWidth:1,borderColor:'rgba(255,255,255,0.12)',alignItems:'center',justifyContent:'center',flexDirection:'row',gap:10},
+  btnIcon:{color:'#fff',fontWeight:'900'},
+  primaryText:{color:'#fff',fontWeight:'800'},
+  secondaryText:{color:'#fff',fontWeight:'700'},
+  signup:{textAlign:'center',color:'#C084FC',marginTop:12,fontWeight:'700'}
 });
