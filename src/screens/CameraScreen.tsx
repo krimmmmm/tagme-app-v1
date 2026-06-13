@@ -322,11 +322,12 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                     left: `${tag.left}%` as any,
                     top: `${tag.top}%` as any,
                     borderColor: tag.color,
-                    backgroundColor: active ? 'rgba(91,75,255,0.92)' : 'rgba(20,20,40,0.82)',
+                    backgroundColor: active ? 'transparent' : 'rgba(20,20,40,0.82)',
                   },
                 ]}
               >
                 {active ? (
+                  // Active AR frame must stay transparent; user data will be rendered separately later.
                   <Image
                     source={require('../../assets/frames/cat-neon-frame-epic.png')}
                     style={styles.catFrameImage}
@@ -425,13 +426,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingVertical: 0,
     borderWidth: 0,
+    borderColor: 'transparent',
     backgroundColor: 'transparent',
     shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+    overflow: 'visible',
   },
 
   catFrameImage: {
     width: '100%',
     height: '100%',
+    backgroundColor: 'transparent',
   },
 
   floatText: { color: '#fff', fontWeight: '900', textAlign: 'center', fontSize: 15 },
