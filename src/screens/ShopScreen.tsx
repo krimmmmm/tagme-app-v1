@@ -1,6 +1,54 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import ScreenTitle from '../components/ScreenTitle';
-const items=[['🐉','Dragon Crest','Legendary','299'],['🌸','Sakura Frame','Epic','199'],['♌','Solar Leo','Epic','199'],['🛵','Rider Badge','Rare','99'],['⚡','Neon Aura','Rare','99'],['👑','Golden Title','Legendary','299']];
-export default function ShopScreen(){return <View style={styles.root}><ScreenTitle title="Marketplace" subtitle="Frame, Symbol, Zodiac, Aura"/><FlatList data={items} numColumns={2} keyExtractor={(i)=>i[1]} contentContainerStyle={{padding:16}} columnWrapperStyle={{gap:12}} renderItem={({item})=><View style={styles.card}><Text style={styles.icon}>{item[0]}</Text><Text style={styles.name}>{item[1]}</Text><Text style={styles.tier}>{item[2]}</Text><Text style={styles.price}>🪙 {item[3]}</Text></View>} /></View>}
-const styles=StyleSheet.create({root:{flex:1},card:{flex:1,minHeight:150,borderRadius:22,marginBottom:12,padding:16,borderWidth:1,borderColor:'rgba(255,255,255,0.1)',backgroundColor:'#12142B'},icon:{fontSize:42},name:{color:'#fff',fontSize:16,fontWeight:'900',marginTop:10},tier:{color:'#A78BFA',fontWeight:'700',marginTop:4},price:{color:'#FFD166',fontWeight:'900',marginTop:12}})
+
+const products = [
+  { icon: '🐉', name: 'Dragon Crest', rarity: 'Legendary', price: '299', color: '#F97316' },
+  { icon: '🌸', name: 'Sakura Frame', rarity: 'Epic', price: '199', color: '#EC4899' },
+  { icon: '👑', name: 'Golden Crown', rarity: 'Epic', price: '199', color: '#FBBF24' },
+  { icon: '🪽', name: 'Angel Wing', rarity: 'Rare', price: '99', color: '#F9A8D4' },
+  { icon: '🌀', name: 'Neon Ring', rarity: 'Epic', price: '149', color: '#A855F7' },
+  { icon: '❄️', name: 'Ice Aura', rarity: 'Rare', price: '99', color: '#38BDF8' },
+];
+
+export default function ShopScreen() {
+  return (
+    <View style={styles.root}>
+      <ScreenTitle title="ร้านค้า" subtitle="ซื้อ Crest, Frame, Symbol และ Effect สำหรับ TagMe" />
+
+      <View style={styles.coinBox}><Text style={styles.coinText}>🪙 12,450</Text></View>
+
+      <View style={styles.categories}>
+        {['แนะนำ', 'Crest', 'Frame', 'Symbol', 'Effect'].map((item, index) => (
+          <Text key={item} style={[styles.category, index === 0 && styles.categoryActive]}>{item}</Text>
+        ))}
+      </View>
+
+      <ScrollView contentContainerStyle={styles.grid}>
+        {products.map((item) => (
+          <View key={item.name} style={styles.card}>
+            <Text style={[styles.productIcon, { color: item.color }]}>{item.icon}</Text>
+            <Text style={styles.productName}>{item.name}</Text>
+            <Text style={styles.rarity}>{item.rarity}</Text>
+            <Text style={styles.price}>🪙 {item.price}</Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#070814' },
+  coinBox: { position: 'absolute', right: 20, top: 30, borderRadius: 999, backgroundColor: 'rgba(245,158,11,0.14)', paddingHorizontal: 14, paddingVertical: 8 },
+  coinText: { color: '#FDE68A', fontWeight: '900' },
+  categories: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, marginTop: 4 },
+  category: { color: '#8B8EA6', backgroundColor: 'rgba(255,255,255,0.06)', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, overflow: 'hidden', fontWeight: '800' },
+  categoryActive: { backgroundColor: '#2536C9', color: '#fff' },
+  grid: { padding: 20, flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  card: { width: '30%', minWidth: 130, flexGrow: 1, borderRadius: 22, backgroundColor: '#12142B', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', padding: 14 },
+  productIcon: { height: 94, borderRadius: 16, backgroundColor: '#090A18', textAlign: 'center', paddingTop: 22, fontSize: 46, overflow: 'hidden' },
+  productName: { color: '#fff', fontWeight: '900', marginTop: 12 },
+  rarity: { color: '#C084FC', marginTop: 4, fontWeight: '700' },
+  price: { color: '#FDE68A', marginTop: 8, fontWeight: '900' },
+});
