@@ -1,13 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import TagBadge from '../components/TagBadge';
 
 export default function CameraScreen() {
   return (
     <View style={styles.root}>
-      <LinearGradient colors={["#1C1D2F", "#22243F", "#0E1023"]} style={styles.cameraMock}>
+      <View style={styles.cameraMock}>
         <View style={styles.topBar}>
           <Pressable style={styles.pillActive}><Text style={styles.pillText}>AR</Text></Pressable>
           <Pressable style={styles.pill}><Text style={styles.pillDim}>Radar</Text></Pressable>
@@ -27,14 +26,14 @@ export default function CameraScreen() {
           <Pressable style={styles.recordBtn}><Ionicons name="ellipse" size={48} color="#FF4D67" /></Pressable>
           <Pressable style={styles.smallBtn}><Ionicons name="sparkles" size={22} color="#fff" /></Pressable>
         </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
 function Round({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label: string }) { return <Pressable style={styles.round}><Ionicons name={icon} size={22} color="#fff"/><Text style={styles.roundText}>{label}</Text></Pressable>; }
 const styles = StyleSheet.create({
   root:{ flex:1, padding:14 },
-  cameraMock:{ flex:1, borderRadius:30, overflow:'hidden', borderWidth:1, borderColor:'rgba(255,255,255,0.1)' },
+  cameraMock:{ flex:1, borderRadius:30, overflow:'hidden', borderWidth:1, borderColor:'rgba(255,255,255,0.1)', backgroundColor:'#15172F' },
   topBar:{ position:'absolute', zIndex:3, top:18, alignSelf:'center', flexDirection:'row', backgroundColor:'rgba(0,0,0,0.28)', borderRadius:22, padding:4 },
   pillActive:{ backgroundColor:'#4057FF', paddingVertical:9, paddingHorizontal:28, borderRadius:18 },
   pill:{ paddingVertical:9, paddingHorizontal:24 }, pillText:{ color:'#fff', fontWeight:'800'}, pillDim:{ color:'#A8ACCF', fontWeight:'700'},

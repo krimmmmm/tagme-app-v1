@@ -1,12 +1,11 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   return (
-    <LinearGradient colors={["#070814", "#14143A", "#090A1A"]} style={styles.container}>
-      <View style={styles.logoBox}><LinearGradient colors={["#31D7FF", "#8B5CF6", "#FF4DE8"]} style={styles.logo}><Text style={styles.logoT}>T</Text></LinearGradient></View>
+    <View style={styles.container}>
+      <View style={styles.logoBox}><View style={styles.logo}><Text style={styles.logoT}>T</Text></View></View>
       <Text style={styles.brand}>TagMe</Text>
       <Text style={styles.tagline}>TAG. CONNECT. BE SEEN.</Text>
       <Text style={styles.thai}>แสดงตัวตนของคุณในโลกจริง</Text>
@@ -16,13 +15,13 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
         <Pressable style={styles.secondaryBtn} onPress={onLogin}><Ionicons name="mail" color="#fff" size={18}/><Text style={styles.secondaryText}>เข้าสู่ระบบด้วยอีเมล</Text></Pressable>
       </View>
       <Text style={styles.footer}>เริ่มต้นสร้าง AR Status ของคุณ</Text>
-    </LinearGradient>
+    </View>
   );
 }
 const styles = StyleSheet.create({
-  container:{ flex:1, alignItems:'center', justifyContent:'center', padding:24 },
+  container:{ flex:1, alignItems:'center', justifyContent:'center', padding:24, backgroundColor:'#070814' },
   logoBox:{ shadowColor:'#FF4DE8', shadowOpacity:0.8, shadowRadius:30 },
-  logo:{ width:116, height:116, borderRadius:28, alignItems:'center', justifyContent:'center' },
+  logo:{ width:116, height:116, borderRadius:28, alignItems:'center', justifyContent:'center', backgroundColor:'#8B5CF6' },
   logoT:{ color:'#fff', fontSize:70, fontWeight:'900', textShadowColor:'#fff', textShadowRadius:12 },
   brand:{ color:'#fff', fontSize:54, fontWeight:'900', marginTop:22 },
   tagline:{ color:'#7CEBFF', fontSize:15, fontWeight:'800', letterSpacing:2, marginTop:6 },
