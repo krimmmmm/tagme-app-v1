@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform, TextInput, Image } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform, TextInput, Image, Dimensions } from 'react-native';
 import { LanguageKey, t } from '../i18n/translations';
 
 type Tag = {
@@ -19,6 +19,12 @@ const initialTags: Tag[] = [
 
 const MEDIAPIPE_VERSION = '0.4.1646425229';
 const MEDIAPIPE_BASE_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@${MEDIAPIPE_VERSION}`;
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const IS_MOBILE = SCREEN_WIDTH < 768;
+const AR_CARD_WIDTH = IS_MOBILE ? 280 : 400;
+const AR_CARD_HEIGHT = IS_MOBILE ? 118 : 160;
+const MEMORY_SLOT_SIZE = IS_MOBILE ? 32 : 42;
+
 
 function loadScript(src: string) {
   return new Promise<void>((resolve, reject) => {
@@ -457,8 +463,8 @@ const styles = StyleSheet.create({
   floatTag: { position: 'absolute', zIndex: 20, borderWidth: 1.4, borderRadius: 14, paddingHorizontal: 13, paddingVertical: 9, shadowColor: '#C026D3', shadowOpacity: 0.65, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } },
 
   floatTagEpic: {
-    width: 400,
-    height: 160,
+    width: AR_CARD_WIDTH,
+    height: AR_CARD_HEIGHT,
     paddingHorizontal: 0,
     paddingVertical: 0,
     borderWidth: 0,
@@ -486,26 +492,26 @@ const styles = StyleSheet.create({
 
   dynamicAvatar: {
     position: 'absolute',
-    left: 58,
-    top: 58,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    left: IS_MOBILE ? 42 : 58,
+    top: IS_MOBILE ? 42 : 58,
+    width: IS_MOBILE ? 38 : 50,
+    height: IS_MOBILE ? 38 : 50,
+    borderRadius: IS_MOBILE ? 19 : 25,
     backgroundColor: 'rgba(255,255,255,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   dynamicAvatarText: {
-    fontSize: 24,
+    fontSize: IS_MOBILE ? 18 : 24,
   },
 
   dynamicName: {
     position: 'absolute',
-    left: 172,
-    top: 50,
+    left: IS_MOBILE ? 122 : 172,
+    top: IS_MOBILE ? 34 : 50,
     color: '#FFFFFF',
-    fontSize: 24,
+    fontSize: IS_MOBILE ? 18 : 24,
     fontWeight: '900',
     textShadowColor: '#9D5CFF',
     textShadowRadius: 8,
@@ -513,8 +519,8 @@ const styles = StyleSheet.create({
 
   dynamicLevel: {
     position: 'absolute',
-    left: 300,
-    top: 56,
+    left: IS_MOBILE ? 218 : 300,
+    top: IS_MOBILE ? 39 : 56,
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -525,49 +531,49 @@ const styles = StyleSheet.create({
 
   dynamicLevelText: {
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: IS_MOBILE ? 8 : 10,
     fontWeight: '900',
   },
 
   dynamicStatus: {
     position: 'absolute',
-    left: 172,
-    top: 84,
+    left: IS_MOBILE ? 122 : 172,
+    top: IS_MOBILE ? 60 : 84,
     color: '#D8B4FE',
-    fontSize: 16,
+    fontSize: IS_MOBILE ? 12 : 16,
     fontWeight: '900',
   },
 
   dynamicMessage: {
     position: 'absolute',
-    left: 172,
-    top: 112,
+    left: IS_MOBILE ? 122 : 172,
+    top: IS_MOBILE ? 80 : 112,
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: IS_MOBILE ? 9 : 12,
     fontWeight: '800',
-    maxWidth: 175,
+    maxWidth: IS_MOBILE ? 110 : 175,
   },
 
   dynamicDistance: {
     position: 'absolute',
-    left: 172,
-    top: 132,
+    left: IS_MOBILE ? 122 : 172,
+    top: IS_MOBILE ? 96 : 132,
     color: '#66E9FF',
-    fontSize: 12,
+    fontSize: IS_MOBILE ? 9 : 12,
     fontWeight: '900',
   },
 
   memoryGallery: {
     position: 'absolute',
-    right: -54,
-    top: 10,
-    gap: 7,
+    right: IS_MOBILE ? 8 : -54,
+    top: IS_MOBILE ? 18 : 10,
+    gap: IS_MOBILE ? 5 : 7,
     alignItems: 'center',
   },
   memorySlot: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: MEMORY_SLOT_SIZE,
+    height: MEMORY_SLOT_SIZE,
+    borderRadius: MEMORY_SLOT_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.16)',
@@ -583,9 +589,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(139,92,246,0.28)',
   },
   memorySlotLocked: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: MEMORY_SLOT_SIZE,
+    height: MEMORY_SLOT_SIZE,
+    borderRadius: MEMORY_SLOT_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.58)',
@@ -594,15 +600,15 @@ const styles = StyleSheet.create({
   },
   memoryEmoji: {
     color: '#FFFFFF',
-    fontSize: 22,
+    fontSize: IS_MOBILE ? 17 : 22,
     fontWeight: '900',
   },
   memoryLock: {
-    fontSize: 13,
+    fontSize: IS_MOBILE ? 11 : 13,
   },
   memoryLevel: {
     color: '#9CA3AF',
-    fontSize: 8,
+    fontSize: IS_MOBILE ? 7 : 8,
     fontWeight: '900',
     marginTop: 1,
   },
