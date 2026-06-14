@@ -21,9 +21,11 @@ const MEDIAPIPE_VERSION = '0.4.1646425229';
 const MEDIAPIPE_BASE_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@${MEDIAPIPE_VERSION}`;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const IS_MOBILE = SCREEN_WIDTH < 768;
-const AR_CARD_WIDTH = IS_MOBILE ? 280 : 400;
-const AR_CARD_HEIGHT = IS_MOBILE ? 118 : 160;
-const MEMORY_SLOT_SIZE = IS_MOBILE ? 32 : 42;
+const AR_CARD_WIDTH = IS_MOBILE ? 260 : 400;
+const AR_CARD_HEIGHT = IS_MOBILE ? 112 : 160;
+const MEMORY_SLOT_SIZE = IS_MOBILE ? 30 : 42;
+const CAMERA_FRAME_WIDTH = Math.max(1, SCREEN_WIDTH - 32);
+const AR_CARD_WIDTH_PERCENT = (AR_CARD_WIDTH / CAMERA_FRAME_WIDTH) * 100;
 
 
 function loadScript(src: string) {
@@ -180,7 +182,13 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
               item.id === selectedTagId
                 ? {
                     ...item,
-                    left: clamp(visualX - 18, 1, 68),
+                    // Center the AR card over the detected face.
+                    // On mobile the card is wide, so fixed -18% makes it shift to the right and get clipped.
+                    left: clamp(
+                      visualX - AR_CARD_WIDTH_PERCENT / 2,
+                      1,
+                      Math.max(1, 99 - AR_CARD_WIDTH_PERCENT)
+                    ),
                     top: fixedTopEdge,
                   }
                 : item
@@ -492,11 +500,11 @@ const styles = StyleSheet.create({
 
   dynamicAvatar: {
     position: 'absolute',
-    left: IS_MOBILE ? 42 : 58,
-    top: IS_MOBILE ? 42 : 58,
-    width: IS_MOBILE ? 38 : 50,
-    height: IS_MOBILE ? 38 : 50,
-    borderRadius: IS_MOBILE ? 19 : 25,
+    left: IS_MOBILE ? 36 : 58,
+    top: IS_MOBILE ? 39 : 58,
+    width: IS_MOBILE ? 34 : 50,
+    height: IS_MOBILE ? 34 : 50,
+    borderRadius: IS_MOBILE ? 17 : 25,
     backgroundColor: 'rgba(255,255,255,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -508,7 +516,7 @@ const styles = StyleSheet.create({
 
   dynamicName: {
     position: 'absolute',
-    left: IS_MOBILE ? 122 : 172,
+    left: IS_MOBILE ? 108 : 172,
     top: IS_MOBILE ? 34 : 50,
     color: '#FFFFFF',
     fontSize: IS_MOBILE ? 18 : 24,
@@ -519,7 +527,7 @@ const styles = StyleSheet.create({
 
   dynamicLevel: {
     position: 'absolute',
-    left: IS_MOBILE ? 218 : 300,
+    left: IS_MOBILE ? 197 : 300,
     top: IS_MOBILE ? 39 : 56,
     borderRadius: 999,
     paddingHorizontal: 8,
@@ -537,7 +545,7 @@ const styles = StyleSheet.create({
 
   dynamicStatus: {
     position: 'absolute',
-    left: IS_MOBILE ? 122 : 172,
+    left: IS_MOBILE ? 108 : 172,
     top: IS_MOBILE ? 60 : 84,
     color: '#D8B4FE',
     fontSize: IS_MOBILE ? 12 : 16,
@@ -546,7 +554,7 @@ const styles = StyleSheet.create({
 
   dynamicMessage: {
     position: 'absolute',
-    left: IS_MOBILE ? 122 : 172,
+    left: IS_MOBILE ? 108 : 172,
     top: IS_MOBILE ? 80 : 112,
     color: '#FFFFFF',
     fontSize: IS_MOBILE ? 9 : 12,
@@ -556,7 +564,7 @@ const styles = StyleSheet.create({
 
   dynamicDistance: {
     position: 'absolute',
-    left: IS_MOBILE ? 122 : 172,
+    left: IS_MOBILE ? 108 : 172,
     top: IS_MOBILE ? 96 : 132,
     color: '#66E9FF',
     fontSize: IS_MOBILE ? 9 : 12,
@@ -565,8 +573,8 @@ const styles = StyleSheet.create({
 
   memoryGallery: {
     position: 'absolute',
-    right: IS_MOBILE ? 8 : -54,
-    top: IS_MOBILE ? 18 : 10,
+    right: IS_MOBILE ? 6 : -54,
+    top: IS_MOBILE ? 14 : 10,
     gap: IS_MOBILE ? 5 : 7,
     alignItems: 'center',
   },
