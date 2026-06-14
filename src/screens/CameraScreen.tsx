@@ -347,6 +347,27 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                     <Text style={styles.dynamicStatus}>{tag.emoji} {tag.title}</Text>
                     <Text style={styles.dynamicMessage}>💬 {myStatus}</Text>
                     <Text style={styles.dynamicDistance}>⌖ 5m away</Text>
+
+                    <View style={styles.memoryGallery}>
+                      <Pressable style={[styles.memorySlot, styles.memorySlotActive]}>
+                        <Text style={styles.memoryEmoji}>＋</Text>
+                      </Pressable>
+
+                      <View style={styles.memorySlotLocked}>
+                        <Text style={styles.memoryLock}>🔒</Text>
+                        <Text style={styles.memoryLevel}>Lv50</Text>
+                      </View>
+
+                      <View style={styles.memorySlotLocked}>
+                        <Text style={styles.memoryLock}>🔒</Text>
+                        <Text style={styles.memoryLevel}>Lv101</Text>
+                      </View>
+
+                      <View style={styles.memorySlotLocked}>
+                        <Text style={styles.memoryLock}>🔒</Text>
+                        <Text style={styles.memoryLevel}>Lv201</Text>
+                      </View>
+                    </View>
                   </View>
                 ) : (
                   <Text style={styles.floatText}>{tag.emoji} {tag.title}</Text>
@@ -534,6 +555,56 @@ const styles = StyleSheet.create({
     color: '#66E9FF',
     fontSize: 12,
     fontWeight: '900',
+  },
+
+  memoryGallery: {
+    position: 'absolute',
+    right: -54,
+    top: 10,
+    gap: 7,
+    alignItems: 'center',
+  },
+  memorySlot: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 2,
+    borderColor: '#66E9FF',
+    shadowColor: '#66E9FF',
+    shadowOpacity: 0.65,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  memorySlotActive: {
+    borderColor: '#F9A8D4',
+    backgroundColor: 'rgba(139,92,246,0.28)',
+  },
+  memorySlotLocked: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.58)',
+    borderWidth: 1,
+    borderColor: 'rgba(156,163,175,0.55)',
+  },
+  memoryEmoji: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  memoryLock: {
+    fontSize: 13,
+  },
+  memoryLevel: {
+    color: '#9CA3AF',
+    fontSize: 8,
+    fontWeight: '900',
+    marginTop: 1,
   },
 
   floatText: { color: '#fff', fontWeight: '900', textAlign: 'center', fontSize: 15 },
