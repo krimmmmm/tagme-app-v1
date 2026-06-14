@@ -362,7 +362,6 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                     <Text style={styles.dynamicMessage}>💬 {myStatus}</Text>
                     <Text style={styles.dynamicDistance}>⌖ 5m away</Text>
                   </View>
-                  </View>
                 ) : (
                   <Text style={styles.floatText}>{tag.emoji} {tag.title}</Text>
                 )}
