@@ -21,9 +21,9 @@ const MEDIAPIPE_VERSION = '0.4.1646425229';
 const MEDIAPIPE_BASE_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@${MEDIAPIPE_VERSION}`;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const IS_MOBILE = SCREEN_WIDTH < 768;
-const AR_CARD_WIDTH = IS_MOBILE ? 260 : 400;
-const AR_CARD_HEIGHT = IS_MOBILE ? 112 : 160;
-const MEMORY_SLOT_SIZE = IS_MOBILE ? 30 : 42;
+const AR_CARD_WIDTH = IS_MOBILE ? 250 : 400;
+const AR_CARD_HEIGHT = IS_MOBILE ? 108 : 160;
+const MEMORY_SLOT_SIZE = IS_MOBILE ? 82 : 110;
 const CAMERA_FRAME_WIDTH = Math.max(1, SCREEN_WIDTH - 32);
 const AR_CARD_WIDTH_PERCENT = (AR_CARD_WIDTH / CAMERA_FRAME_WIDTH) * 100;
 
@@ -361,27 +361,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                     <Text style={styles.dynamicStatus}>{tag.emoji} {tag.title}</Text>
                     <Text style={styles.dynamicMessage}>💬 {myStatus}</Text>
                     <Text style={styles.dynamicDistance}>⌖ 5m away</Text>
-
-                    <View style={styles.memoryGallery}>
-                      <Pressable style={[styles.memorySlot, styles.memorySlotActive]}>
-                        <Text style={styles.memoryEmoji}>＋</Text>
-                      </Pressable>
-
-                      <View style={styles.memorySlotLocked}>
-                        <Text style={styles.memoryLock}>🔒</Text>
-                        <Text style={styles.memoryLevel}>Lv50</Text>
-                      </View>
-
-                      <View style={styles.memorySlotLocked}>
-                        <Text style={styles.memoryLock}>🔒</Text>
-                        <Text style={styles.memoryLevel}>Lv101</Text>
-                      </View>
-
-                      <View style={styles.memorySlotLocked}>
-                        <Text style={styles.memoryLock}>🔒</Text>
-                        <Text style={styles.memoryLevel}>Lv201</Text>
-                      </View>
-                    </View>
+                  </View>
                   </View>
                 ) : (
                   <Text style={styles.floatText}>{tag.emoji} {tag.title}</Text>
@@ -389,6 +369,27 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
               </Pressable>
             );
           })}
+
+          <View style={styles.memoryGallery}>
+            <Pressable style={[styles.memorySlot, styles.memorySlotActive]}>
+              <Text style={styles.memoryEmoji}>＋</Text>
+            </Pressable>
+
+            <View style={styles.memorySlotLocked}>
+              <Text style={styles.memoryLock}>🔒</Text>
+              <Text style={styles.memoryLevel}>Lv50</Text>
+            </View>
+
+            <View style={styles.memorySlotLocked}>
+              <Text style={styles.memoryLock}>🔒</Text>
+              <Text style={styles.memoryLevel}>Lv101</Text>
+            </View>
+
+            <View style={styles.memorySlotLocked}>
+              <Text style={styles.memoryLock}>🔒</Text>
+              <Text style={styles.memoryLevel}>Lv201</Text>
+            </View>
+          </View>
 
           <Text style={[styles.distanceBubble, { left: '18%', bottom: 36 }]}>8m</Text>
           <Text style={[styles.distanceBubble, { left: '48%', bottom: 82, backgroundColor: '#15803D' }]}>5m</Text>
@@ -571,54 +572,62 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
 
+  // Large right-side Memory Gallery. It is fixed to the camera frame, not attached to the moving AR card.
   memoryGallery: {
     position: 'absolute',
-    right: IS_MOBILE ? 6 : -54,
-    top: IS_MOBILE ? 14 : 10,
-    gap: IS_MOBILE ? 5 : 7,
+    zIndex: 26,
+    right: IS_MOBILE ? 8 : 22,
+    top: IS_MOBILE ? 90 : 94,
+    gap: IS_MOBILE ? 12 : 14,
     alignItems: 'center',
   },
+
   memorySlot: {
     width: MEMORY_SLOT_SIZE,
     height: MEMORY_SLOT_SIZE,
     borderRadius: MEMORY_SLOT_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderWidth: 2,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: IS_MOBILE ? 3 : 4,
     borderColor: '#66E9FF',
     shadowColor: '#66E9FF',
-    shadowOpacity: 0.65,
-    shadowRadius: 10,
+    shadowOpacity: 0.85,
+    shadowRadius: 14,
     shadowOffset: { width: 0, height: 0 },
   },
+
   memorySlotActive: {
     borderColor: '#F9A8D4',
-    backgroundColor: 'rgba(139,92,246,0.28)',
+    backgroundColor: 'rgba(139,92,246,0.30)',
   },
+
   memorySlotLocked: {
     width: MEMORY_SLOT_SIZE,
     height: MEMORY_SLOT_SIZE,
     borderRadius: MEMORY_SLOT_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.58)',
-    borderWidth: 1,
-    borderColor: 'rgba(156,163,175,0.55)',
+    backgroundColor: 'rgba(0,0,0,0.62)',
+    borderWidth: IS_MOBILE ? 3 : 4,
+    borderColor: 'rgba(156,163,175,0.70)',
   },
+
   memoryEmoji: {
     color: '#FFFFFF',
-    fontSize: IS_MOBILE ? 17 : 22,
+    fontSize: IS_MOBILE ? 34 : 44,
     fontWeight: '900',
   },
+
   memoryLock: {
-    fontSize: IS_MOBILE ? 11 : 13,
+    fontSize: IS_MOBILE ? 24 : 32,
   },
+
   memoryLevel: {
-    color: '#9CA3AF',
-    fontSize: IS_MOBILE ? 7 : 8,
+    color: '#D1D5DB',
+    fontSize: IS_MOBILE ? 11 : 14,
     fontWeight: '900',
-    marginTop: 1,
+    marginTop: 2,
   },
 
   floatText: { color: '#fff', fontWeight: '900', textAlign: 'center', fontSize: 15 },
