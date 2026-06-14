@@ -43,7 +43,18 @@ const categories: Array<{ key: Category; label: string }> = [
 export default function ShopScreen() {
   const [category, setCategory] = useState<Category>('recommended');
   const [coins, setCoins] = useState(12450);
-  const [owned, setOwned] = useState<string[]>([]);
+
+  // Demo state: items already purchased by the user.
+  // Later this should come from Supabase / user inventory.
+  const [owned, setOwned] = useState<string[]>([
+    'cat-neon-frame-epic-empty',
+    'dragon-crest',
+    'sakura-frame',
+  ]);
+
+  // Demo state: currently selected frame.
+  // Later this should be saved to user profile / selected_items.
+  const [activeFrame, setActiveFrame] = useState<string>('cat-neon-frame-epic-empty');
 
   const visibleItems =
     category === 'recommended'
@@ -53,8 +64,22 @@ export default function ShopScreen() {
   const buyItem = (item: ShopItem) => {
     if (owned.includes(item.id)) return;
     if (coins < item.price) return;
+
     setCoins((value) => value - item.price);
     setOwned((value) => [...value, item.id]);
+
+    if (item.category === 'frame') {
+      setActiveFrame(item.id);
+    }
+  };
+
+  const useItem = (item: ShopItem) => {
+    const isOwned = owned.includes(item.id);
+    if (!isOwned) return;
+
+    if (item.category === 'frame') {
+      setActiveFrame(item.id);
+    }
   };
 
   return (
@@ -101,8 +126,15 @@ export default function ShopScreen() {
         <View style={styles.grid}>
           {visibleItems.map((item) => {
             const isOwned = owned.includes(item.id);
+            const isFrame = item.category === 'frame';
+            const isActiveFrame = isFrame && activeFrame === item.id;
+
             return (
-              <Pressable key={item.id} style={styles.card} onPress={() => buyItem(item)}>
+              <Pressable
+                key={item.id}
+                style={[styles.card, isActiveFrame && styles.activeCard]}
+                onPress={() => buyItem(item)}
+              >
                 <View style={styles.previewBox}>
                   {item.image ? (
                     <Image source={item.image} style={styles.framePreview} resizeMode="contain" />
@@ -115,6 +147,12 @@ export default function ShopScreen() {
                       <Text style={styles.newTagText}>{item.tag}</Text>
                     </View>
                   ) : null}
+
+                  {isActiveFrame ? (
+                    <View style={styles.activeTag}>
+                      <Text style={styles.activeTagText}>ใช้งานอยู่</Text>
+                    </View>
+                  ) : null}
                 </View>
 
                 <View style={styles.cardBody}>
@@ -123,12 +161,38 @@ export default function ShopScreen() {
 
                   <View style={styles.priceRow}>
                     <Text style={styles.price}>🪙 {item.price}</Text>
-                    <View style={[styles.buyPill, isOwned && styles.ownedPill]}>
+
+                    <Pressable
+                      onPress={() => buyItem(item)}
+                      disabled={isOwned}
+                      style={[styles.buyPill, isOwned && styles.ownedPill]}
+                    >
                       <Text style={[styles.buyText, isOwned && styles.ownedText]}>
                         {isOwned ? 'มีแล้ว' : 'ซื้อ'}
                       </Text>
-                    </View>
+                    </Pressable>
                   </View>
+
+                  <Pressable
+                    onPress={() => useItem(item)}
+                    disabled={!isOwned}
+                    style={[
+                      styles.usePill,
+                      !isOwned && styles.usePillDisabled,
+                      isOwned && styles.usePillReady,
+                      isActiveFrame && styles.usePillActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.useText,
+                        !isOwned && styles.useTextDisabled,
+                        isActiveFrame && styles.useTextActive,
+                      ]}
+                    >
+                      {!isOwned ? 'เลือกใช้' : isActiveFrame ? '✓ ใช้งานอยู่' : 'เลือกใช้'}
+                    </Text>
+                  </Pressable>
                 </View>
               </Pressable>
             );
@@ -161,11 +225,14 @@ const styles = StyleSheet.create({
   sectionTitle: { color: '#fff', fontSize: 22, fontWeight: '900', marginBottom: 16 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   card: { flexBasis: '31%', minWidth: 260, flexGrow: 1, borderRadius: 24, padding: 14, backgroundColor: '#12142B', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  activeCard: { borderColor: '#86EFAC' },
   previewBox: { height: 126, borderRadius: 18, backgroundColor: '#070814', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' },
   framePreview: { width: '112%', height: '112%' },
   iconPreview: { fontSize: 42 },
   newTag: { position: 'absolute', top: 10, right: 10, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(236,72,153,0.9)' },
   newTagText: { color: '#fff', fontSize: 11, fontWeight: '900' },
+  activeTag: { position: 'absolute', left: 10, top: 10, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(34,197,94,0.90)' },
+  activeTagText: { color: '#fff', fontSize: 11, fontWeight: '900' },
   cardBody: { marginTop: 14 },
   itemTitle: { color: '#fff', fontSize: 16, fontWeight: '900' },
   rarity: { color: '#C084FC', fontSize: 14, fontWeight: '900', marginTop: 6 },
@@ -175,4 +242,11 @@ const styles = StyleSheet.create({
   ownedPill: { backgroundColor: 'rgba(34,197,94,0.18)', borderWidth: 1, borderColor: '#22C55E' },
   buyText: { color: '#fff', fontWeight: '900' },
   ownedText: { color: '#86EFAC' },
+  usePill: { marginTop: 12, minHeight: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  usePillDisabled: { backgroundColor: 'rgba(107,114,128,0.18)', borderColor: 'rgba(156,163,175,0.30)' },
+  usePillReady: { backgroundColor: 'rgba(51,69,255,0.18)', borderColor: '#66E9FF' },
+  usePillActive: { backgroundColor: 'rgba(34,197,94,0.22)', borderColor: '#22C55E' },
+  useText: { fontWeight: '900' },
+  useTextDisabled: { color: '#6B7280' },
+  useTextActive: { color: '#86EFAC' },
 });
