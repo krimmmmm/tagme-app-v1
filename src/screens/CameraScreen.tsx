@@ -87,6 +87,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
   const detectorRef = useRef<any>(null);
   const loopRef = useRef<number | null>(null);
   const isDetectingRef = useRef(false);
+  const missedFaceFramesRef = useRef(0);
   const smoothFrameRef = useRef({
     initialized: false,
     left: 42,
@@ -181,14 +182,23 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
 
         detector.setOptions({
           model: 'short',
-          minDetectionConfidence: 0.55,
+          // Lower confidence helps keep detecting faces when the user is farther from the camera.
+          minDetectionConfidence: 0.32,
         });
 
         detector.onResults((results: any) => {
           const detections = results?.detections || [];
 
           if (!detections.length) {
-            setFaceStatus('Face Follow: ไม่พบใบหน้า');
+            missedFaceFramesRef.current += 1;
+            setFaceStatus(`Face Follow: ไม่พบใบหน้า (${missedFaceFramesRef.current})`);
+
+            // At longer distance MediaPipe can miss a few frames.
+            // Keep the AR frame visible briefly so it does not disappear while the user is still on screen.
+            if (missedFaceFramesRef.current < 28) {
+              return;
+            }
+
             smoothFrameRef.current.initialized = false;
             setTags((items) =>
               items.map((item) =>
@@ -198,10 +208,18 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
             return;
           }
 
+          missedFaceFramesRef.current = 0;
+
           const detection = detections[0];
           const box = detection?.boundingBox;
           if (!box) {
+            missedFaceFramesRef.current += 1;
             setFaceStatus('Face Follow: พบใบหน้า แต่ยังอ่านตำแหน่งไม่ได้');
+
+            if (missedFaceFramesRef.current < 28) {
+              return;
+            }
+
             smoothFrameRef.current.initialized = false;
             setTags((items) =>
               items.map((item) =>
@@ -223,7 +241,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
 
           // User far from camera => face box smaller => AR frame smaller.
           // User close to camera => face box larger => AR frame larger.
-          const faceScale = clamp(faceHeight / 0.28, 0.85, 1.08);
+          const faceScale = clamp(faceHeight / 0.24, 0.76, 1.10);
 
           // Approximate head tilt from MediaPipe eye keypoints.
           const headRotate = getHeadTiltAngle(detection);
@@ -527,7 +545,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
             </Pressable>
           </View>
 
-          <Text style={styles.hint}>ใช้ MediaPipe Face Detection: เปิด ON แล้วกล่องที่เลือกจะตามใบหน้าแบบ Smooth</Text>
+          <Text style={styles.hint}>ใช้ MediaPipe Face Detection: เปิด ON แล้วกล่องจะตามใบหน้าแบบ Smooth และทนต่อระยะไกลขึ้น</Text>
         </View>
       </View>
     </View>
