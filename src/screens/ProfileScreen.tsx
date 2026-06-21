@@ -1,10 +1,24 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Image, Platform } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Image, Platform, TextInput } from 'react-native';
 
 type MemorySlot = {
   slot: number;
   unlockLevel: number;
   imageUri?: string | null;
+};
+
+type UserInfo = {
+  occupation: string;
+  company: string;
+  position: string;
+  phone: string;
+};
+
+const DEFAULT_USER_INFO: UserInfo = {
+  occupation: 'Project Manager',
+  company: 'AIS',
+  position: 'EPM',
+  phone: '081-xxx-5678',
 };
 
 const userLevel = 25;
@@ -19,7 +33,26 @@ const initialSlots: MemorySlot[] = [
 export default function ProfileScreen() {
   const [slots, setSlots] = useState<MemorySlot[]>(initialSlots);
   const [selectedSlot, setSelectedSlot] = useState(1);
+  const [userInfo, setUserInfo] = useState<UserInfo>(DEFAULT_USER_INFO);
   const fileInputRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    try {
+      const saved = window.localStorage.getItem('tagmeUserInfo');
+      if (saved) setUserInfo({ ...DEFAULT_USER_INFO, ...JSON.parse(saved) });
+    } catch {
+      setUserInfo(DEFAULT_USER_INFO);
+    }
+  }, []);
+
+  const updateUserInfo = (key: keyof UserInfo, value: string) => {
+    const next = { ...userInfo, [key]: value };
+    setUserInfo(next);
+    if (Platform.OS === 'web') {
+      window.localStorage.setItem('tagmeUserInfo', JSON.stringify(next));
+    }
+  };
 
   const openImagePicker = (slot: MemorySlot) => {
     setSelectedSlot(slot.slot);
@@ -72,6 +105,33 @@ export default function ProfileScreen() {
           <Text style={styles.name}>Tadchai</Text>
           <Text style={styles.handle}>@tagme.user</Text>
           <Text style={styles.level}>Lv.{userLevel}</Text>
+        </View>
+      </View>
+
+      <View style={styles.infoCard}>
+        <Text style={styles.sectionTitle}>🪪 ข้อมูลที่แสดงใน AR</Text>
+        <Text style={styles.sectionSub}>ค่าเริ่มต้นจะแสดง อาชีพ และ บริษัท ทางซ้ายของ AR Card</Text>
+
+        <View style={styles.formGrid}>
+          <View style={styles.inputBox}>
+            <Text style={styles.inputLabel}>อาชีพ</Text>
+            <TextInput value={userInfo.occupation} onChangeText={(value) => updateUserInfo('occupation', value)} placeholder="เช่น Project Manager" placeholderTextColor="#6B7280" style={styles.textInput} />
+          </View>
+
+          <View style={styles.inputBox}>
+            <Text style={styles.inputLabel}>บริษัท</Text>
+            <TextInput value={userInfo.company} onChangeText={(value) => updateUserInfo('company', value)} placeholder="เช่น AIS" placeholderTextColor="#6B7280" style={styles.textInput} />
+          </View>
+
+          <View style={styles.inputBox}>
+            <Text style={styles.inputLabel}>ตำแหน่ง</Text>
+            <TextInput value={userInfo.position} onChangeText={(value) => updateUserInfo('position', value)} placeholder="เช่น EPM" placeholderTextColor="#6B7280" style={styles.textInput} />
+          </View>
+
+          <View style={styles.inputBox}>
+            <Text style={styles.inputLabel}>เบอร์โทร</Text>
+            <TextInput value={userInfo.phone} onChangeText={(value) => updateUserInfo('phone', value)} placeholder="เช่น 081-xxx-5678" placeholderTextColor="#6B7280" style={styles.textInput} />
+          </View>
         </View>
       </View>
 
@@ -178,6 +238,11 @@ const styles = StyleSheet.create({
   title: { color: '#fff', fontSize: 34, fontWeight: '900' },
   subtitle: { color: '#A8ACCF', marginTop: 8, fontWeight: '700' },
   profileCard: { flexDirection: 'row', alignItems: 'center', gap: 16, borderRadius: 26, padding: 18, backgroundColor: '#12142B', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  infoCard: { marginTop: 18, borderRadius: 26, padding: 18, backgroundColor: '#12142B', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  formGrid: { gap: 12, marginTop: 16 },
+  inputBox: { gap: 6 },
+  inputLabel: { color: '#66E9FF', fontSize: 12, fontWeight: '900' },
+  textInput: { height: 46, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', color: '#fff', paddingHorizontal: 14, fontWeight: '800' },
   avatar: { width: 78, height: 78, borderRadius: 39, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(139,92,246,0.22)', borderWidth: 2, borderColor: '#66E9FF' },
   avatarText: { fontSize: 34 },
   name: { color: '#fff', fontSize: 26, fontWeight: '900' },

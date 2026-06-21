@@ -14,6 +14,20 @@ type Tag = {
   rotate?: number;
 };
 
+type UserInfo = {
+  occupation: string;
+  company: string;
+  position: string;
+  phone: string;
+};
+
+const DEFAULT_USER_INFO: UserInfo = {
+  occupation: 'Project Manager',
+  company: 'AIS',
+  position: 'EPM',
+  phone: '081-xxx-5678',
+};
+
 const initialTags: Tag[] = [
   { id: '1', emoji: '🎮', title: 'Gamer', left: 42, top: 30, color: '#F59E0B', visible: false, scale: 1, rotate: 0 },
   { id: '2', emoji: '🎌', title: 'Anime Club', left: 12, top: 24, color: '#C026D3' },
@@ -105,6 +119,18 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
   const [tags, setTags] = useState<Tag[]>(initialTags);
   const [selectedTagId, setSelectedTagId] = useState('1');
   const [myStatus, setMyStatus] = useState('ขอความช่วยเหลือ');
+  const [showFullInfo, setShowFullInfo] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo>(DEFAULT_USER_INFO);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    try {
+      const saved = window.localStorage.getItem('tagmeUserInfo');
+      if (saved) setUserInfo({ ...DEFAULT_USER_INFO, ...JSON.parse(saved) });
+    } catch {
+      setUserInfo(DEFAULT_USER_INFO);
+    }
+  }, []);
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -458,6 +484,29 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                       resizeMode="contain"
                     />
 
+                    <Pressable
+                      style={[styles.userInfoPanel, showFullInfo && styles.userInfoPanelExpanded]}
+                      onPress={() => setShowFullInfo((value) => !value)}
+                    >
+                      <Text style={styles.infoLabel}>อาชีพ</Text>
+                      <Text style={styles.infoValue} numberOfLines={1}>{userInfo.occupation}</Text>
+
+                      <Text style={styles.infoLabel}>บริษัท</Text>
+                      <Text style={styles.infoValue} numberOfLines={1}>{userInfo.company}</Text>
+
+                      {showFullInfo ? (
+                        <>
+                          <Text style={styles.infoLabel}>ตำแหน่ง</Text>
+                          <Text style={styles.infoValue} numberOfLines={1}>{userInfo.position}</Text>
+
+                          <Text style={styles.infoLabel}>เบอร์โทร</Text>
+                          <Text style={styles.infoValue} numberOfLines={1}>{userInfo.phone}</Text>
+                        </>
+                      ) : (
+                        <Text style={styles.infoHint}>แตะเพื่อดูเพิ่ม</Text>
+                      )}
+                    </Pressable>
+
                     <View style={styles.dynamicAvatar}>
                       <Text style={styles.dynamicAvatarText}>👤</Text>
                     </View>
@@ -618,6 +667,49 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     backgroundColor: 'transparent',
+  },
+
+  userInfoPanel: {
+    position: 'absolute',
+    left: IS_MOBILE ? -118 : -172,
+    top: IS_MOBILE ? 16 : 20,
+    width: IS_MOBILE ? 104 : 156,
+    paddingHorizontal: IS_MOBILE ? 9 : 12,
+    paddingVertical: IS_MOBILE ? 8 : 10,
+    borderRadius: 16,
+    backgroundColor: 'rgba(20,20,40,0.66)',
+    borderWidth: 1,
+    borderColor: 'rgba(102,233,255,0.45)',
+    shadowColor: '#66E9FF',
+    shadowOpacity: 0.32,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+  },
+
+  userInfoPanelExpanded: {
+    backgroundColor: 'rgba(20,20,40,0.78)',
+    borderColor: 'rgba(249,168,212,0.55)',
+  },
+
+  infoLabel: {
+    color: '#66E9FF',
+    fontSize: IS_MOBILE ? 8 : 11,
+    fontWeight: '900',
+    marginTop: 3,
+  },
+
+  infoValue: {
+    color: '#FFFFFF',
+    fontSize: IS_MOBILE ? 9 : 12,
+    fontWeight: '800',
+    marginTop: 1,
+  },
+
+  infoHint: {
+    color: '#D8B4FE',
+    fontSize: IS_MOBILE ? 7 : 10,
+    fontWeight: '800',
+    marginTop: 6,
   },
 
   dynamicAvatar: {
