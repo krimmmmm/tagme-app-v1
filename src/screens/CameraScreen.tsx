@@ -9,10 +9,13 @@ type Tag = {
   left: number;
   top: number;
   color: string;
+  visible?: boolean;
+  scale?: number;
+  rotate?: number;
 };
 
 const initialTags: Tag[] = [
-  { id: '1', emoji: '🎮', title: 'Gamer', left: 42, top: 30, color: '#F59E0B' },
+  { id: '1', emoji: '🎮', title: 'Gamer', left: 42, top: 30, color: '#F59E0B', visible: false, scale: 1, rotate: 0 },
   { id: '2', emoji: '🎌', title: 'Anime Club', left: 12, top: 24, color: '#C026D3' },
   { id: '3', emoji: '🎮', title: 'Gamer', left: 66, top: 26, color: '#22C55E' },
 ];
@@ -53,6 +56,26 @@ function loadScript(src: string) {
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
+
+function getHeadTiltAngle(detection: any) {
+  const keypoints = detection?.landmarks || detection?.keypoints || detection?.locationData?.relativeKeypoints || [];
+  if (!Array.isArray(keypoints) || keypoints.length < 2) return 0;
+
+  const leftEye = keypoints[0];
+  const rightEye = keypoints[1];
+
+  const leftX = Number(leftEye?.x ?? 0);
+  const leftY = Number(leftEye?.y ?? 0);
+  const rightX = Number(rightEye?.x ?? 0);
+  const rightY = Number(rightEye?.y ?? 0);
+
+  if (!Number.isFinite(leftX) || !Number.isFinite(leftY) || !Number.isFinite(rightX) || !Number.isFinite(rightY)) {
+    return 0;
+  }
+
+  return clamp(Math.atan2(rightY - leftY, rightX - leftX) * (180 / Math.PI), -18, 18);
+}
+
 
 export default function CameraScreen({ language }: { language: LanguageKey }) {
   const text = t[language];
@@ -157,12 +180,23 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
 
           if (!detections.length) {
             setFaceStatus('Face Follow: ไม่พบใบหน้า');
+            setTags((items) =>
+              items.map((item) =>
+                item.id === selectedTagId ? { ...item, visible: false } : item
+              )
+            );
             return;
           }
 
-          const box = detections[0]?.boundingBox;
+          const detection = detections[0];
+          const box = detection?.boundingBox;
           if (!box) {
             setFaceStatus('Face Follow: พบใบหน้า แต่ยังอ่านตำแหน่งไม่ได้');
+            setTags((items) =>
+              items.map((item) =>
+                item.id === selectedTagId ? { ...item, visible: false } : item
+              )
+            );
             return;
           }
 
@@ -171,6 +205,17 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
 
           const xCenterRaw = Number(box.xCenter ?? 0.5);
           const xCenter = xCenterRaw > 1 ? xCenterRaw / videoWidth : xCenterRaw;
+
+          const videoHeight = video?.videoHeight || 720;
+          const faceHeightRaw = Number(box.height ?? 0.25);
+          const faceHeight = faceHeightRaw > 1 ? faceHeightRaw / videoHeight : faceHeightRaw;
+
+          // User far from camera => face box smaller => AR frame smaller.
+          // User close to camera => face box larger => AR frame larger.
+          const faceScale = clamp(faceHeight / 0.28, 0.58, 1.22);
+
+          // Approximate head tilt from MediaPipe eye keypoints.
+          const headRotate = getHeadTiltAngle(detection);
 
           // Video is mirrored by CSS scaleX(-1), so x must be mirrored too.
           // Keep horizontal tracking only, and pin the AR card to the top edge.
@@ -190,6 +235,9 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                       Math.max(1, 99 - AR_CARD_WIDTH_PERCENT)
                     ),
                     top: fixedTopEdge,
+                    visible: true,
+                    scale: faceScale,
+                    rotate: headRotate,
                   }
                 : item
             )
@@ -337,6 +385,13 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                     top: `${tag.top}%` as any,
                     borderColor: tag.color,
                     backgroundColor: active ? 'transparent' : 'rgba(20,20,40,0.82)',
+                    opacity: active && tag.visible === false ? 0 : 1,
+                    transform: active
+                      ? [
+                          { scale: tag.scale ?? 1 },
+                          { rotate: `${tag.rotate ?? 0}deg` },
+                        ]
+                      : undefined,
                   },
                 ]}
               >
@@ -369,26 +424,38 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
             );
           })}
 
-          <View style={styles.memoryGallery}>
-            <Pressable style={[styles.memorySlot, styles.memorySlotActive]}>
-              <Text style={styles.memoryEmoji}>＋</Text>
-            </Pressable>
+          {tags.find((item) => item.id === selectedTagId)?.visible ? (
+            <View
+              style={[
+                styles.memoryGallery,
+                {
+                  transform: [
+                    { scale: tags.find((item) => item.id === selectedTagId)?.scale ?? 1 },
+                    { rotate: `${tags.find((item) => item.id === selectedTagId)?.rotate ?? 0}deg` },
+                  ],
+                },
+              ]}
+            >
+              <Pressable style={[styles.memorySlot, styles.memorySlotActive]}>
+                <Text style={styles.memoryEmoji}>＋</Text>
+              </Pressable>
 
-            <View style={styles.memorySlotLocked}>
-              <Text style={styles.memoryLock}>🔒</Text>
-              <Text style={styles.memoryLevel}>Lv50</Text>
-            </View>
+              <View style={styles.memorySlotLocked}>
+                <Text style={styles.memoryLock}>🔒</Text>
+                <Text style={styles.memoryLevel}>Lv50</Text>
+              </View>
 
-            <View style={styles.memorySlotLocked}>
-              <Text style={styles.memoryLock}>🔒</Text>
-              <Text style={styles.memoryLevel}>Lv101</Text>
-            </View>
+              <View style={styles.memorySlotLocked}>
+                <Text style={styles.memoryLock}>🔒</Text>
+                <Text style={styles.memoryLevel}>Lv101</Text>
+              </View>
 
-            <View style={styles.memorySlotLocked}>
-              <Text style={styles.memoryLock}>🔒</Text>
-              <Text style={styles.memoryLevel}>Lv201</Text>
+              <View style={styles.memorySlotLocked}>
+                <Text style={styles.memoryLock}>🔒</Text>
+                <Text style={styles.memoryLevel}>Lv201</Text>
+              </View>
             </View>
-          </View>
+          ) : null}
 
           <Text style={[styles.distanceBubble, { left: '18%', bottom: 36 }]}>8m</Text>
           <Text style={[styles.distanceBubble, { left: '48%', bottom: 82, backgroundColor: '#15803D' }]}>5m</Text>
