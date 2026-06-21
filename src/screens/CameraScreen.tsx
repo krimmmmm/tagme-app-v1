@@ -73,7 +73,9 @@ function getHeadTiltAngle(detection: any) {
     return 0;
   }
 
-  return clamp(Math.atan2(rightY - leftY, rightX - leftX) * (180 / Math.PI), -18, 18);
+  // The camera preview is mirrored with scaleX(-1), so invert rotation direction.
+  // Limit to +/- 8 degrees to prevent fast shaking.
+  return -clamp(Math.atan2(rightY - leftY, rightX - leftX) * (180 / Math.PI), -8, 8);
 }
 
 
@@ -85,6 +87,13 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
   const detectorRef = useRef<any>(null);
   const loopRef = useRef<number | null>(null);
   const isDetectingRef = useRef(false);
+  const smoothFrameRef = useRef({
+    initialized: false,
+    left: 42,
+    top: 1.5,
+    scale: 1,
+    rotate: 0,
+  });
 
   const [mode, setMode] = useState<'ar' | 'radar'>('ar');
   const [cameraReady, setCameraReady] = useState(false);
@@ -180,6 +189,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
 
           if (!detections.length) {
             setFaceStatus('Face Follow: ไม่พบใบหน้า');
+            smoothFrameRef.current.initialized = false;
             setTags((items) =>
               items.map((item) =>
                 item.id === selectedTagId ? { ...item, visible: false } : item
@@ -192,6 +202,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
           const box = detection?.boundingBox;
           if (!box) {
             setFaceStatus('Face Follow: พบใบหน้า แต่ยังอ่านตำแหน่งไม่ได้');
+            smoothFrameRef.current.initialized = false;
             setTags((items) =>
               items.map((item) =>
                 item.id === selectedTagId ? { ...item, visible: false } : item
@@ -212,7 +223,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
 
           // User far from camera => face box smaller => AR frame smaller.
           // User close to camera => face box larger => AR frame larger.
-          const faceScale = clamp(faceHeight / 0.28, 0.58, 1.22);
+          const faceScale = clamp(faceHeight / 0.28, 0.85, 1.08);
 
           // Approximate head tilt from MediaPipe eye keypoints.
           const headRotate = getHeadTiltAngle(detection);
@@ -222,6 +233,36 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
           const visualX = (1 - xCenter) * 100;
           const fixedTopEdge = 1.5;
 
+          const targetLeft = clamp(
+            visualX - AR_CARD_WIDTH_PERCENT / 2,
+            1,
+            Math.max(1, 99 - AR_CARD_WIDTH_PERCENT)
+          );
+          const targetTop = fixedTopEdge;
+
+          const smooth = smoothFrameRef.current;
+          if (!smooth.initialized) {
+            smooth.left = targetLeft;
+            smooth.top = targetTop;
+            smooth.scale = faceScale;
+            smooth.rotate = headRotate;
+            smooth.initialized = true;
+          } else {
+            const positionLerp = 0.16;
+            const scaleLerp = 0.12;
+            const rotateLerp = 0.10;
+
+            smooth.left += (targetLeft - smooth.left) * positionLerp;
+            smooth.top += (targetTop - smooth.top) * positionLerp;
+            smooth.scale += (faceScale - smooth.scale) * scaleLerp;
+            smooth.rotate += (headRotate - smooth.rotate) * rotateLerp;
+
+            if (Math.abs(targetLeft - smooth.left) < 0.08) smooth.left = targetLeft;
+            if (Math.abs(targetTop - smooth.top) < 0.08) smooth.top = targetTop;
+            if (Math.abs(faceScale - smooth.scale) < 0.01) smooth.scale = faceScale;
+            if (Math.abs(headRotate - smooth.rotate) < 0.15) smooth.rotate = headRotate;
+          }
+
           setTags((items) =>
             items.map((item) =>
               item.id === selectedTagId
@@ -229,15 +270,11 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                     ...item,
                     // Center the AR card over the detected face.
                     // On mobile the card is wide, so fixed -18% makes it shift to the right and get clipped.
-                    left: clamp(
-                      visualX - AR_CARD_WIDTH_PERCENT / 2,
-                      1,
-                      Math.max(1, 99 - AR_CARD_WIDTH_PERCENT)
-                    ),
-                    top: fixedTopEdge,
+                    left: smooth.left,
+                    top: smooth.top,
                     visible: true,
-                    scale: faceScale,
-                    rotate: headRotate,
+                    scale: smooth.scale,
+                    rotate: smooth.rotate,
                   }
                 : item
             )
@@ -490,7 +527,7 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
             </Pressable>
           </View>
 
-          <Text style={styles.hint}>ใช้ MediaPipe Face Detection: เปิด ON แล้วกล่องที่เลือกจะตามใบหน้า</Text>
+          <Text style={styles.hint}>ใช้ MediaPipe Face Detection: เปิด ON แล้วกล่องที่เลือกจะตามใบหน้าแบบ Smooth</Text>
         </View>
       </View>
     </View>
