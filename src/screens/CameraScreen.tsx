@@ -484,29 +484,6 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                       resizeMode="contain"
                     />
 
-                    <Pressable
-                      style={[styles.userInfoPanel, showFullInfo && styles.userInfoPanelExpanded]}
-                      onPress={() => setShowFullInfo((value) => !value)}
-                    >
-                      <Text style={styles.infoLabel}>อาชีพ</Text>
-                      <Text style={styles.infoValue} numberOfLines={1}>{userInfo.occupation}</Text>
-
-                      <Text style={styles.infoLabel}>บริษัท</Text>
-                      <Text style={styles.infoValue} numberOfLines={1}>{userInfo.company}</Text>
-
-                      {showFullInfo ? (
-                        <>
-                          <Text style={styles.infoLabel}>ตำแหน่ง</Text>
-                          <Text style={styles.infoValue} numberOfLines={1}>{userInfo.position}</Text>
-
-                          <Text style={styles.infoLabel}>เบอร์โทร</Text>
-                          <Text style={styles.infoValue} numberOfLines={1}>{userInfo.phone}</Text>
-                        </>
-                      ) : (
-                        <Text style={styles.infoHint}>แตะเพื่อดูเพิ่ม</Text>
-                      )}
-                    </Pressable>
-
                     <View style={styles.dynamicAvatar}>
                       <Text style={styles.dynamicAvatarText}>👤</Text>
                     </View>
@@ -527,6 +504,31 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
               </Pressable>
             );
           })}
+
+          {tags.find((item) => item.id === selectedTagId)?.visible ? (
+            <Pressable
+              style={[styles.userInfoPanel, showFullInfo && styles.userInfoPanelExpanded]}
+              onPress={() => setShowFullInfo((value) => !value)}
+            >
+              <Text style={styles.infoLabel}>อาชีพ</Text>
+              <Text style={styles.infoValue} numberOfLines={1}>{userInfo.occupation}</Text>
+
+              <Text style={styles.infoLabel}>บริษัท</Text>
+              <Text style={styles.infoValue} numberOfLines={1}>{userInfo.company}</Text>
+
+              {showFullInfo ? (
+                <>
+                  <Text style={styles.infoLabel}>ตำแหน่ง</Text>
+                  <Text style={styles.infoValue} numberOfLines={1}>{userInfo.position}</Text>
+
+                  <Text style={styles.infoLabel}>เบอร์โทร</Text>
+                  <Text style={styles.infoValue} numberOfLines={1}>{userInfo.phone}</Text>
+                </>
+              ) : (
+                <Text style={styles.infoHint}>แตะเพื่อดูเพิ่ม</Text>
+              )}
+            </Pressable>
+          ) : null}
 
           {tags.find((item) => item.id === selectedTagId)?.visible ? (
             <View
@@ -671,12 +673,13 @@ const styles = StyleSheet.create({
 
   userInfoPanel: {
     position: 'absolute',
-    left: IS_MOBILE ? -118 : -172,
-    top: IS_MOBILE ? 16 : 20,
-    width: IS_MOBILE ? 104 : 156,
-    paddingHorizontal: IS_MOBILE ? 9 : 12,
-    paddingVertical: IS_MOBILE ? 8 : 10,
-    borderRadius: 16,
+    zIndex: 27,
+    left: IS_MOBILE ? 18 : 24,
+    bottom: IS_MOBILE ? 22 : 34,
+    width: IS_MOBILE ? 142 : 190,
+    paddingHorizontal: IS_MOBILE ? 10 : 14,
+    paddingVertical: IS_MOBILE ? 10 : 12,
+    borderRadius: 18,
     backgroundColor: 'rgba(20,20,40,0.66)',
     borderWidth: 1,
     borderColor: 'rgba(102,233,255,0.45)',
@@ -687,29 +690,29 @@ const styles = StyleSheet.create({
   },
 
   userInfoPanelExpanded: {
-    backgroundColor: 'rgba(20,20,40,0.78)',
-    borderColor: 'rgba(249,168,212,0.55)',
+    backgroundColor: 'rgba(20,20,40,0.80)',
+    borderColor: 'rgba(249,168,212,0.58)',
   },
 
   infoLabel: {
     color: '#66E9FF',
-    fontSize: IS_MOBILE ? 8 : 11,
+    fontSize: IS_MOBILE ? 10 : 12,
     fontWeight: '900',
     marginTop: 3,
   },
 
   infoValue: {
     color: '#FFFFFF',
-    fontSize: IS_MOBILE ? 9 : 12,
+    fontSize: IS_MOBILE ? 12 : 15,
     fontWeight: '800',
     marginTop: 1,
   },
 
   infoHint: {
     color: '#D8B4FE',
-    fontSize: IS_MOBILE ? 7 : 10,
+    fontSize: IS_MOBILE ? 9 : 11,
     fontWeight: '800',
-    marginTop: 6,
+    marginTop: 8,
   },
 
   dynamicAvatar: {
