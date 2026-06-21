@@ -24,9 +24,8 @@ const MEDIAPIPE_VERSION = '0.4.1646425229';
 const MEDIAPIPE_BASE_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@${MEDIAPIPE_VERSION}`;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const IS_MOBILE = SCREEN_WIDTH < 768;
-const AR_CARD_WIDTH = IS_MOBILE ? 250 : 400;
-const AR_CARD_HEIGHT = IS_MOBILE ? 108 : 160;
-const MEMORY_SLOT_SIZE = IS_MOBILE ? 82 : 110;
+const AR_CARD_WIDTH = IS_MOBILE ? 260 : 360;
+const AR_CARD_HEIGHT = IS_MOBILE ? 108 : 150;
 const CAMERA_FRAME_WIDTH = Math.max(1, SCREEN_WIDTH - 32);
 const AR_CARD_WIDTH_PERCENT = (AR_CARD_WIDTH / CAMERA_FRAME_WIDTH) * 100;
 
@@ -58,7 +57,12 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function getHeadTiltAngle(detection: any) {
-  const keypoints = detection?.landmarks || detection?.keypoints || detection?.locationData?.relativeKeypoints || [];
+  const keypoints =
+    detection?.landmarks ||
+    detection?.keypoints ||
+    detection?.locationData?.relativeKeypoints ||
+    [];
+
   if (!Array.isArray(keypoints) || keypoints.length < 2) return 0;
 
   const leftEye = keypoints[0];
@@ -69,11 +73,19 @@ function getHeadTiltAngle(detection: any) {
   const rightX = Number(rightEye?.x ?? 0);
   const rightY = Number(rightEye?.y ?? 0);
 
-  if (!Number.isFinite(leftX) || !Number.isFinite(leftY) || !Number.isFinite(rightX) || !Number.isFinite(rightY)) {
+  if (
+    !Number.isFinite(leftX) ||
+    !Number.isFinite(leftY) ||
+    !Number.isFinite(rightX) ||
+    !Number.isFinite(rightY)
+  ) {
     return 0;
   }
 
-  return clamp(Math.atan2(rightY - leftY, rightX - leftX) * (180 / Math.PI), -18, 18);
+  const rawAngle = Math.atan2(rightY - leftY, rightX - leftX) * (180 / Math.PI);
+
+  // The camera preview is mirrored with scaleX(-1), so rotation direction must be inverted.
+  return -clamp(rawAngle, -18, 18);
 }
 
 
@@ -202,39 +214,42 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
 
           const video = videoRef.current;
           const videoWidth = video?.videoWidth || 1280;
+          const videoHeight = video?.videoHeight || 720;
 
           const xCenterRaw = Number(box.xCenter ?? 0.5);
-          const xCenter = xCenterRaw > 1 ? xCenterRaw / videoWidth : xCenterRaw;
-
-          const videoHeight = video?.videoHeight || 720;
+          const yCenterRaw = Number(box.yCenter ?? 0.25);
           const faceHeightRaw = Number(box.height ?? 0.25);
+
+          const xCenter = xCenterRaw > 1 ? xCenterRaw / videoWidth : xCenterRaw;
+          const yCenter = yCenterRaw > 1 ? yCenterRaw / videoHeight : yCenterRaw;
           const faceHeight = faceHeightRaw > 1 ? faceHeightRaw / videoHeight : faceHeightRaw;
 
-          // User far from camera => face box smaller => AR frame smaller.
-          // User close to camera => face box larger => AR frame larger.
-          const faceScale = clamp(faceHeight / 0.28, 0.58, 1.22);
+          // Video is mirrored by CSS scaleX(-1), so x must be mirrored too.
+          const visualX = (1 - xCenter) * 100;
 
-          // Approximate head tilt from MediaPipe eye keypoints.
+          // Anchor the frame to the user's head instead of pinning it to the screen top.
+          // Far user = small faceHeight = smaller frame. Close user = larger faceHeight = larger frame.
+          const faceScale = clamp(faceHeight / 0.28, 0.58, 1.22);
           const headRotate = getHeadTiltAngle(detection);
 
-          // Video is mirrored by CSS scaleX(-1), so x must be mirrored too.
-          // Keep horizontal tracking only, and pin the AR card to the top edge.
-          const visualX = (1 - xCenter) * 100;
-          const fixedTopEdge = 1.5;
+          // Keep center of frame aligned with center of head.
+          const leftEdge = clamp(
+            visualX - AR_CARD_WIDTH_PERCENT / 2,
+            1,
+            Math.max(1, 99 - AR_CARD_WIDTH_PERCENT)
+          );
+
+          // Place frame above the face/head. The multiplier controls how much it sticks to the head.
+          const faceTop = (yCenter - faceHeight / 2) * 100;
+          const topEdge = clamp(faceTop - 7, 1, 72);
 
           setTags((items) =>
             items.map((item) =>
               item.id === selectedTagId
                 ? {
                     ...item,
-                    // Center the AR card over the detected face.
-                    // On mobile the card is wide, so fixed -18% makes it shift to the right and get clipped.
-                    left: clamp(
-                      visualX - AR_CARD_WIDTH_PERCENT / 2,
-                      1,
-                      Math.max(1, 99 - AR_CARD_WIDTH_PERCENT)
-                    ),
-                    top: fixedTopEdge,
+                    left: leftEdge,
+                    top: topEdge,
                     visible: true,
                     scale: faceScale,
                     rotate: headRotate,
@@ -396,66 +411,17 @@ export default function CameraScreen({ language }: { language: LanguageKey }) {
                 ]}
               >
                 {active ? (
-                  <View style={styles.epicCardWrap}>
-                    <Image
-                      source={require('../../assets/frames/cat-neon-frame-epic-empty.png')}
-                      style={styles.catFrameImage}
-                      resizeMode="contain"
-                    />
-
-                    <View style={styles.dynamicAvatar}>
-                      <Text style={styles.dynamicAvatarText}>👤</Text>
-                    </View>
-
-                    <Text style={styles.dynamicName}>Tadchai</Text>
-
-                    <View style={styles.dynamicLevel}>
-                      <Text style={styles.dynamicLevelText}>Lv.25</Text>
-                    </View>
-
-                    <Text style={styles.dynamicStatus}>{tag.emoji} {tag.title}</Text>
-                    <Text style={styles.dynamicMessage}>💬 {myStatus}</Text>
-                    <Text style={styles.dynamicDistance}>⌖ 5m away</Text>
-                  </View>
+                  <Image
+                    source={require('../../assets/frames/cat-neon-frame-epic.png')}
+                    style={styles.catFrameImage}
+                    resizeMode="contain"
+                  />
                 ) : (
                   <Text style={styles.floatText}>{tag.emoji} {tag.title}</Text>
                 )}
               </Pressable>
             );
           })}
-
-          {tags.find((item) => item.id === selectedTagId)?.visible ? (
-            <View
-              style={[
-                styles.memoryGallery,
-                {
-                  transform: [
-                    { scale: tags.find((item) => item.id === selectedTagId)?.scale ?? 1 },
-                    { rotate: `${tags.find((item) => item.id === selectedTagId)?.rotate ?? 0}deg` },
-                  ],
-                },
-              ]}
-            >
-              <Pressable style={[styles.memorySlot, styles.memorySlotActive]}>
-                <Text style={styles.memoryEmoji}>＋</Text>
-              </Pressable>
-
-              <View style={styles.memorySlotLocked}>
-                <Text style={styles.memoryLock}>🔒</Text>
-                <Text style={styles.memoryLevel}>Lv50</Text>
-              </View>
-
-              <View style={styles.memorySlotLocked}>
-                <Text style={styles.memoryLock}>🔒</Text>
-                <Text style={styles.memoryLevel}>Lv101</Text>
-              </View>
-
-              <View style={styles.memorySlotLocked}>
-                <Text style={styles.memoryLock}>🔒</Text>
-                <Text style={styles.memoryLevel}>Lv201</Text>
-              </View>
-            </View>
-          ) : null}
 
           <Text style={[styles.distanceBubble, { left: '18%', bottom: 36 }]}>8m</Text>
           <Text style={[styles.distanceBubble, { left: '48%', bottom: 82, backgroundColor: '#15803D' }]}>5m</Text>
@@ -543,157 +509,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingVertical: 0,
     borderWidth: 0,
-    borderColor: 'transparent',
     backgroundColor: 'transparent',
     shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
-    overflow: 'visible',
-  },
-
-  epicCardWrap: {
-    width: '100%',
-    height: '100%',
-    position: 'relative',
-    backgroundColor: 'transparent',
   },
 
   catFrameImage: {
-    position: 'absolute',
     width: '100%',
     height: '100%',
     backgroundColor: 'transparent',
-  },
-
-  dynamicAvatar: {
-    position: 'absolute',
-    left: IS_MOBILE ? 36 : 58,
-    top: IS_MOBILE ? 39 : 58,
-    width: IS_MOBILE ? 34 : 50,
-    height: IS_MOBILE ? 34 : 50,
-    borderRadius: IS_MOBILE ? 17 : 25,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  dynamicAvatarText: {
-    fontSize: IS_MOBILE ? 18 : 24,
-  },
-
-  dynamicName: {
-    position: 'absolute',
-    left: IS_MOBILE ? 108 : 172,
-    top: IS_MOBILE ? 34 : 50,
-    color: '#FFFFFF',
-    fontSize: IS_MOBILE ? 18 : 24,
-    fontWeight: '900',
-    textShadowColor: '#9D5CFF',
-    textShadowRadius: 8,
-  },
-
-  dynamicLevel: {
-    position: 'absolute',
-    left: IS_MOBILE ? 197 : 300,
-    top: IS_MOBILE ? 39 : 56,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: '#66E9FF',
-    backgroundColor: 'rgba(7,8,20,0.45)',
-  },
-
-  dynamicLevelText: {
-    color: '#FFFFFF',
-    fontSize: IS_MOBILE ? 8 : 10,
-    fontWeight: '900',
-  },
-
-  dynamicStatus: {
-    position: 'absolute',
-    left: IS_MOBILE ? 108 : 172,
-    top: IS_MOBILE ? 60 : 84,
-    color: '#D8B4FE',
-    fontSize: IS_MOBILE ? 12 : 16,
-    fontWeight: '900',
-  },
-
-  dynamicMessage: {
-    position: 'absolute',
-    left: IS_MOBILE ? 108 : 172,
-    top: IS_MOBILE ? 80 : 112,
-    color: '#FFFFFF',
-    fontSize: IS_MOBILE ? 9 : 12,
-    fontWeight: '800',
-    maxWidth: IS_MOBILE ? 110 : 175,
-  },
-
-  dynamicDistance: {
-    position: 'absolute',
-    left: IS_MOBILE ? 108 : 172,
-    top: IS_MOBILE ? 96 : 132,
-    color: '#66E9FF',
-    fontSize: IS_MOBILE ? 9 : 12,
-    fontWeight: '900',
-  },
-
-  // Large right-side Memory Gallery. It is fixed to the camera frame, not attached to the moving AR card.
-  memoryGallery: {
-    position: 'absolute',
-    zIndex: 26,
-    right: IS_MOBILE ? 8 : 22,
-    top: IS_MOBILE ? 90 : 94,
-    gap: IS_MOBILE ? 12 : 14,
-    alignItems: 'center',
-  },
-
-  memorySlot: {
-    width: MEMORY_SLOT_SIZE,
-    height: MEMORY_SLOT_SIZE,
-    borderRadius: MEMORY_SLOT_SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderWidth: IS_MOBILE ? 3 : 4,
-    borderColor: '#66E9FF',
-    shadowColor: '#66E9FF',
-    shadowOpacity: 0.85,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 0 },
-  },
-
-  memorySlotActive: {
-    borderColor: '#F9A8D4',
-    backgroundColor: 'rgba(139,92,246,0.30)',
-  },
-
-  memorySlotLocked: {
-    width: MEMORY_SLOT_SIZE,
-    height: MEMORY_SLOT_SIZE,
-    borderRadius: MEMORY_SLOT_SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.62)',
-    borderWidth: IS_MOBILE ? 3 : 4,
-    borderColor: 'rgba(156,163,175,0.70)',
-  },
-
-  memoryEmoji: {
-    color: '#FFFFFF',
-    fontSize: IS_MOBILE ? 34 : 44,
-    fontWeight: '900',
-  },
-
-  memoryLock: {
-    fontSize: IS_MOBILE ? 24 : 32,
-  },
-
-  memoryLevel: {
-    color: '#D1D5DB',
-    fontSize: IS_MOBILE ? 11 : 14,
-    fontWeight: '900',
-    marginTop: 2,
   },
 
   floatText: { color: '#fff', fontWeight: '900', textAlign: 'center', fontSize: 15 },
